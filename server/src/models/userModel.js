@@ -1,0 +1,113 @@
+const mongoose = require('mongoose');
+
+const addressSchema = new mongoose.Schema(
+  {
+    houseNumber: { type: String, trim: true },
+    street: { type: String, trim: true },
+    area: { type: String, trim: true },
+    landmark: { type: String, trim: true },
+    city: { type: String, trim: true },
+    district: { type: String, trim: true },
+    state: { type: String, trim: true },
+    country: { type: String, default: 'India', trim: true },
+    postalCode: { type: String, trim: true },
+  },
+  { _id: false },
+);
+
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 2,
+      maxlength: 80,
+    },
+
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
+    },
+
+    passwordHash: {
+      type: String,
+      required: true,
+      select: false,
+    },
+
+    phone: {
+      type: Number,
+      trim: true,
+      required: true,
+    },
+
+    profileImage: {
+      type: String,
+      default: null,
+    },
+
+    address: {
+      type: addressSchema,
+      default: () => ({}),
+    },
+
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    // Changes made here: Added fields for Email OTP verification
+    emailOTP: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
+    emailOTPExpiry: {
+      type: Date,
+      default: null,
+    },
+
+    emailOTPAttempts: {
+      type: Number,
+      default: 0,
+    },
+
+    accountStatus: {
+      type: String,
+      enum: ['active', 'suspended', 'blocked'],
+      default: 'active',
+    },
+
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
+
+    lastLoginAt: {
+      type: Date,
+      default: null,
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+  },
+  { timestamps: true },
+);
+
+userSchema.index({ accountStatus: 1, isDeleted: 1 }); //indexing
+
+module.exports = mongoose.model('User', userSchema);

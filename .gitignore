@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build files
+dist/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.log
+EOF
+cat > .gitignore << 'EOF'
+# Dependencies
+node_modules/
+
+# Build files
+dist/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+EOF

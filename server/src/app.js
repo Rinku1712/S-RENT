@@ -1,0 +1,42 @@
+// Configure the Express application and middleware.
+const express = require('express');
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const adminRoutes = require('./routes/superAdminRoutes');
+const itemRoutes = require('./routes/itemRoutes');
+const rentalRoutes = require('./routes/rentalRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const app = express();
+
+// Enable CORS for frontend requests
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+app.use(express.json());
+app.use('/api/category', categoryRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/item', itemRoutes);
+app.use('/api/rentals', rentalRoutes);
+app.use('/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+
+app.use((error, req, res, next) => {
+  if (error.type === 'entity.parse.failed') {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid JSON request body',
+    });
+  }
+  return next(error);
+});
+
+module.exports = app;
