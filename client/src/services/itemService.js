@@ -19,6 +19,19 @@ export const searchItems = async (params = {}) => {
 };
 
 export const createItem = async (itemData) => {
-  const response = await api.post('/api/item', itemData);
+  const isMultipart = itemData instanceof FormData;
+  const response = await api.post('/api/item', itemData, {
+    headers: isMultipart ? { 'Content-Type': 'multipart/form-data' } : undefined,
+  });
+  return response.data;
+};
+
+export const updateItemImages = async (itemId, files) => {
+  const formData = new FormData();
+  files.forEach((file) => formData.append('images', file));
+
+  const response = await api.patch(`/api/item/${itemId}/images`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return response.data;
 };

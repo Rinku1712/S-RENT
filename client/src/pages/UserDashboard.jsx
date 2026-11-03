@@ -6,9 +6,14 @@ import {
   approveRentalRequest,
   rejectRentalRequest,
 } from '../services/rentalService';
-import { getAllItems } from '../services/itemService';
+import { getAllItems, updateItemImages } from '../services/itemService';
 import { getUserProfile } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
+import {
+  isImageWithinSizeLimit,
+  isSupportedImage,
+  supportedImageFormats,
+} from '../utils/imageValidation';
 import {
   LayoutDashboard,
   Package,
@@ -23,11 +28,11 @@ import {
   AlertCircle,
   ArrowRight,
   ExternalLink,
-  MapPin,
   RefreshCw,
   Mail,
   Phone,
   ShieldCheck,
+  Image,
 } from 'lucide-react';
 
 /**
@@ -69,6 +74,7 @@ const UserDashboard = () => {
   const [actionMessage, setActionMessage] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [actionProcessingId, setActionProcessingId] = useState(null);
+  const [imageUploadItemId, setImageUploadItemId] = useState(null);
 
   // Fetch dashboard statistics
   const fetchStats = async () => {
@@ -191,6 +197,43 @@ const UserDashboard = () => {
       setActionError(err.message || 'Error occurred while rejecting.');
     } finally {
       setActionProcessingId(null);
+    }
+  };
+
+  const handleUpdateImages = async (itemId, files) => {
+    if (files.length === 0) return;
+
+    if (
+      files.length > 10 ||
+      files.some((file) => !isSupportedImage(file))
+    ) {
+      setActionError(`Choose up to 10 images in these formats: ${supportedImageFormats}.`);
+      return;
+    }
+
+    if (files.some((file) => !isImageWithinSizeLimit(file))) {
+      setActionError('Each image must be 5 MB or smaller.');
+      return;
+    }
+
+    if (!window.confirm('Replace all current images with the selected images?')) return;
+
+    try {
+      setImageUploadItemId(itemId);
+      setActionMessage(null);
+      setActionError(null);
+      const result = await updateItemImages(itemId, files);
+
+      if (result.success) {
+        setActionMessage('Item images updated successfully.');
+        await fetchMyListings();
+      } else {
+        setActionError(result.message || 'Failed to update item images.');
+      }
+    } catch (err) {
+      setActionError(err.message || 'Failed to update item images.');
+    } finally {
+      setImageUploadItemId(null);
     }
   };
 
@@ -518,13 +561,33 @@ const UserDashboard = () => {
                             </span>
                           </td>
                           <td style={{ textAlign: 'right' }}>
-                            <Link
-                              to={`/items/${item._id}`}
-                              className="btn btn-secondary btn-sm"
-                            >
-                              <ExternalLink size={13} />
-                              <span>View Listing</span>
-                            </Link>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                              <label className="btn btn-secondary btn-sm">
+                                <Image size={13} />
+                                <span>
+                                  {imageUploadItemId === item._id ? 'Uploading...' : 'Update Images'}
+                                </span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  multiple
+                                  disabled={imageUploadItemId === item._id}
+                                  onChange={(e) => {
+                                    const files = Array.from(e.target.files || []);
+                                    e.target.value = '';
+                                    handleUpdateImages(item._id, files);
+                                  }}
+                                  style={{ display: 'none' }}
+                                />
+                              </label>
+                              <Link
+                                to={`/items/${item._id}`}
+                                className="btn btn-secondary btn-sm"
+                              >
+                                <ExternalLink size={13} />
+                                <span>View Listing</span>
+                              </Link>
+                            </div>
                           </td>
                         </tr>
                       ))}

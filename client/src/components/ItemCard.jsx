@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Tag, Shield, ArrowRight, Package } from 'lucide-react';
+import { MapPin, Shield, ArrowRight, Package } from 'lucide-react';
+import getItemImageUrl from '../utils/itemImageUrl';
 
 /**
  * ItemCard Component
@@ -39,11 +40,7 @@ const ItemCard = ({ item }) => {
     if (imageError || !item.images || item.images.length === 0) {
       return null;
     }
-    const firstImg = item.images[0];
-    if (firstImg.startsWith('http')) {
-      return firstImg;
-    }
-    return `/${firstImg}`;
+    return getItemImageUrl(item.images[0]);
   };
 
   const imageUrl = getImageUrl();

@@ -3,15 +3,15 @@ import { useNavigate, Link } from 'react-router-dom';
 import { createItem } from '../services/itemService';
 import { getCategories } from '../services/categoryService';
 import {
+  isImageWithinSizeLimit,
+  isSupportedImage,
+  supportedImageFormats,
+} from '../utils/imageValidation';
+import {
   PlusCircle,
-  Package,
-  MapPin,
-  Tag,
-  ShieldCheck,
   CheckCircle2,
   AlertCircle,
   ArrowLeft,
-  DollarSign,
   Info,
 } from 'lucide-react';
 
@@ -30,6 +30,7 @@ const CreateItem = () => {
 
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [imageFiles, setImageFiles] = useState([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -80,6 +81,10 @@ const CreateItem = () => {
     }));
   };
 
+  const handleImageFilesChange = (e) => {
+    setImageFiles(Array.from(e.target.files || []));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -117,26 +122,49 @@ const CreateItem = () => {
       return;
     }
 
+    if (imageFiles.length + (formData.imageUrl.trim() ? 1 : 0) > 10) {
+      setError('A maximum of 10 images are allowed, including an image URL.');
+      return;
+    }
+
+    if (imageFiles.some((file) => !isSupportedImage(file))) {
+      setError(`Supported image formats are ${supportedImageFormats}.`);
+      return;
+    }
+
+    if (imageFiles.some((file) => !isImageWithinSizeLimit(file))) {
+      setError('Each image must be 5 MB or smaller.');
+      return;
+    }
+
     try {
       setLoading(true);
 
-      const payload = {
-        name: formData.name.trim(),
-        description: formData.description.trim(),
-        brand: formData.brand.trim() || 'General',
-        categoryId: formData.categoryId,
-        condition: formData.condition,
-        pricePerDay: priceDay,
-        pricePerWeek: formData.pricePerWeek ? Number(formData.pricePerWeek) : undefined,
-        securityDeposit: deposit,
-        location: {
+      const payload = new FormData();
+      payload.append('name', formData.name.trim());
+      payload.append('description', formData.description.trim());
+      payload.append('brand', formData.brand.trim() || 'General');
+      payload.append('categoryId', formData.categoryId);
+      payload.append('condition', formData.condition);
+      payload.append('pricePerDay', String(priceDay));
+      if (formData.pricePerWeek) {
+        payload.append('pricePerWeek', String(Number(formData.pricePerWeek)));
+      }
+      payload.append('securityDeposit', String(deposit));
+      payload.append(
+        'location',
+        JSON.stringify({
           city: formData.city.trim(),
           state: formData.state.trim(),
           country: formData.country.trim() || 'India',
           postalCode: formData.postalCode.trim() || '',
-        },
-        images: formData.imageUrl.trim() ? [formData.imageUrl.trim()] : [],
-      };
+        }),
+      );
+      payload.append(
+        'imageUrls',
+        JSON.stringify(formData.imageUrl.trim() ? [formData.imageUrl.trim()] : []),
+      );
+      imageFiles.forEach((file) => payload.append('images', file));
 
       const result = await createItem(payload);
 
@@ -290,6 +318,22 @@ const CreateItem = () => {
                   onChange={handleChange}
                   className="form-input"
                 />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Upload Images (Optional, up to 10 total)</label>
+                <input
+                  type="file"
+                  name="images"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageFilesChange}
+                  className="form-input"
+                />
+                <small className="text-muted">
+                  {supportedImageFormats}; maximum 5 MB per image.
+                  {imageFiles.length > 0 && ` ${imageFiles.length} file(s) selected.`}
+                </small>
               </div>
             </div>
           </div>

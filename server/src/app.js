@@ -1,5 +1,6 @@
 // Configure the Express application and middleware.
 const express = require('express');
+const path = require('path');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
@@ -21,6 +22,18 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+app.use(
+  '/uploads',
+  (req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader(
+      'Content-Security-Policy',
+      "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:",
+    );
+    next();
+  },
+  express.static(path.join(__dirname, 'uploads')),
+);
 app.use('/api/category', categoryRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/item', itemRoutes);

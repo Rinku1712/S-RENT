@@ -1,5 +1,6 @@
 const Item = require('../models/itemModel');
 const Category = require('../models/categoryModel');
+const Rental = require('../models/rentalModel');
 const mongoose = require('mongoose');
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -54,7 +55,8 @@ const createItem = async (userId, itemData) => {
     //   return {
     //     success: false,
     //     statusCode: 409,
-    //     message: 'Item Already Exist',
+    //     message: '
+    // Item Already Exist',
     //   };
     // }`
     return {
@@ -79,6 +81,102 @@ const createItem = async (userId, itemData) => {
     };
   }
 };
+
+const updateItemImages = async (itemId, userId, images) => {
+  if (!mongoose.Types.ObjectId.isValid(itemId)) {
+    return {
+      success: false,
+      statusCode: 400,
+      message: 'Invalid item ID',
+    };
+  }
+
+  const item = await Item.findOne({ _id: itemId, isDeleted: false });
+
+  if (!item) {
+    return {
+      success: false,
+      statusCode: 404,
+      message: 'Item not found',
+    };
+  }
+
+  if (String(item.ownerId) !== String(userId)) {
+    return {
+      success: false,
+      statusCode: 403,
+      message: 'You are not allowed to update this item',
+    };
+  }
+
+  const previousImages = item.images || [];
+  item.images = images;
+  await item.save();
+
+  return {
+    success: true,
+    statusCode: 200,
+    message: 'Item images updated successfully',
+    item,
+    previousImages,
+  };
+};
+
+const deleteItem = async (itemId, userId) => {
+  if (!mongoose.Types.ObjectId.isValid(itemId)) {
+    return {
+      success: false,
+      statusCode: 400,
+      message: 'Invalid item ID',
+    };
+  }
+
+  const item = await Item.findOne({ _id: itemId, isDeleted: false });
+
+  if (!item) {
+    return {
+      success: false,
+      statusCode: 404,
+      message: 'Item not found',
+    };
+  }
+
+  if (String(item.ownerId) !== String(userId)) {
+    return {
+      success: false,
+      statusCode: 403,
+      message: 'You are not allowed to delete this item',
+    };
+  }
+
+  const unresolvedRental = await Rental.exists({
+    itemId: item._id,
+    isDeleted: { $ne: true },
+    status: { $in: ['pending', 'approved'] },
+  });
+
+  if (unresolvedRental) {
+    return {
+      success: false,
+      statusCode: 409,
+      message: 'Items with pending or approved rental requests cannot be deleted',
+    };
+  }
+
+  const previousImages = item.images || [];
+  item.isDeleted = true;
+  item.deletedAt = new Date();
+  item.availabilityStatus = 'paused';
+  await item.save();
+
+  return {
+    success: true,
+    statusCode: 200,
+    message: 'Item deleted successfully',
+    previousImages,
+  };
+};
+
 const getAllItems = async () => {
   const item = await Item.find({
     availabilityStatus: 'available',
@@ -334,4 +432,10 @@ const searchItems = async (filters) => {
   };
 };
 
-module.exports = { createItem, getAllItems, searchItems };
+module.exports = {
+  createItem,
+  updateItemImages,
+  deleteItem,
+  getAllItems,
+  searchItems,
+};

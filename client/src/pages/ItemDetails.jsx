@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { getAllItems } from '../services/itemService';
 import { createRental } from '../services/rentalService';
+import getItemImageUrl from '../utils/itemImageUrl';
 import { useAuth } from '../context/AuthContext';
 import {
   ChevronRight,
@@ -15,8 +16,6 @@ import {
   UserCheck,
   ArrowLeft,
   X,
-  CreditCard,
-  Clock,
 } from 'lucide-react';
 
 /**
@@ -175,7 +174,7 @@ const ItemDetails = () => {
   }
 
   const firstImage = item.images && item.images.length > 0 ? item.images[0] : null;
-  const imageUrl = firstImage && firstImage.startsWith('http') ? firstImage : firstImage ? `/${firstImage}` : null;
+  const imageUrl = getItemImageUrl(firstImage);
   const isAvailable = item.availabilityStatus === 'available';
 
   return (

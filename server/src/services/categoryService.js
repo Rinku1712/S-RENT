@@ -12,7 +12,7 @@ const getAllCategories = async () => {
 const createCategory = async (categoryData) => {
   const { name, description, image, parentCategory } = categoryData;
 
-  // Automatically generate a slug from the category name.
+  // Automatically generate a slug from the category name
 
   const slug = name
     .trim()
@@ -20,7 +20,7 @@ const createCategory = async (categoryData) => {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
-  // Check whether the category name or slug already exists.
+  // Check whether the category name or slug already exists
 
   const existingCategory = await Category.findOne({
     $or: [{ name: name.trim() }, { slug }],

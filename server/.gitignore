@@ -3,6 +3,7 @@ node_modules/
 
 # Build files
 dist/
+src/uploads/
 
 # Environment variables
 .env

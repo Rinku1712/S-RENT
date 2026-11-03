@@ -1,1 +1,0 @@
-// Calculate rental charges.

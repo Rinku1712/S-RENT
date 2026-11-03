@@ -286,7 +286,6 @@ const approveRentalRequest = async (rentalId, ownerId) => {
 
   rental.status = 'approved';
   await rental.save();
-
   return {
     success: true,
     statusCode: 200,
