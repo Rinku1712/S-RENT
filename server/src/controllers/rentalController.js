@@ -44,6 +44,23 @@ const getOwnerRentalRequests = async (req, res) => {
   }
 };
 
+const getMyRentalRecords = async (req, res) => {
+  try {
+    const result = await rentalService.getMyRentalRecords(req.user.id);
+    return res.status(result.statusCode).json({
+      success: result.success,
+      message: result.message,
+      data: result.data,
+    });
+  } catch (error) {
+    console.error('Failed to fetch renter rental records:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch your rental records',
+    });
+  }
+};
+
 // Changes made here
 const approveRentalRequest = async (req, res) => {
   try {
@@ -81,6 +98,7 @@ const rejectRentalRequest = async (req, res) => {
 module.exports = {
   createRental,
   getOwnerRentalRequests,
+  getMyRentalRecords,
   approveRentalRequest,
   rejectRentalRequest,
 };

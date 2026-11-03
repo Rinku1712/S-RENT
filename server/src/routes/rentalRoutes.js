@@ -8,6 +8,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 router.post('/', authMiddleware, rentalController.createRental);
 
 // Changes made here
+router.get('/my-rented-items', authMiddleware, rentalController.getMyRentalRecords);
 router.get('/owner/requests', authMiddleware, rentalController.getOwnerRentalRequests);
 router.patch('/:rentalId/approve', authMiddleware, rentalController.approveRentalRequest);
 router.patch('/:rentalId/reject', authMiddleware, rentalController.rejectRentalRequest);

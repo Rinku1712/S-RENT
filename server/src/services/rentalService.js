@@ -199,6 +199,70 @@ const getOwnerRentalRequests = async (ownerId) => {
   };
 };
 
+const getMyRentalRecords = async (renterId) => {
+  const rentals = await Rental.find({
+    renterId,
+    isDeleted: { $ne: true },
+  })
+    .populate({
+      path: 'itemId',
+      select:
+        'name description brand images categoryId condition pricePerDay pricePerWeek securityDeposit location',
+      populate: {
+        path: 'categoryId',
+        select: 'name',
+      },
+    })
+    .populate({
+      path: 'ownerId',
+      select: 'name profileImage email phone address',
+    })
+    .sort({ createdAt: -1 });
+
+  const data = rentals.map((rental) => {
+    const rentalData = rental.toObject();
+    const owner = rentalData.ownerId;
+    // Share direct contact details only after the owner approves the rental.
+    const canShareOwnerContact = ['approved', 'completed'].includes(rental.status);
+
+    return {
+      _id: rentalData._id,
+      itemId: rentalData.itemId,
+      ownerId: owner
+        ? {
+            name: owner.name,
+            profileImage: owner.profileImage,
+            address: {
+              city: owner.address?.city || '',
+              state: owner.address?.state || '',
+              country: owner.address?.country || '',
+            },
+            ...(canShareOwnerContact
+              ? { email: owner.email, phone: owner.phone }
+              : {}),
+          }
+        : null,
+      startDate: rentalData.startDate,
+      endDate: rentalData.endDate,
+      totalDays: rentalData.totalDays,
+      pricePerDay: rentalData.pricePerDay,
+      totalAmount: rentalData.totalAmount,
+      securityDeposit: rentalData.securityDeposit,
+      status: rentalData.status,
+      createdAt: rentalData.createdAt,
+      // Payment is not linked to Rental records in the current payment model.
+      paymentStatus: null,
+    };
+  });
+
+  return {
+    success: true,
+    statusCode: 200,
+    message: 'Your rental records were fetched successfully',
+    data,
+  };
+};
+
 // Changes made here
 const findPendingRentalForOwner = async (rentalId, ownerId) => {
   if (!mongoose.Types.ObjectId.isValid(rentalId)) {
@@ -316,6 +380,7 @@ const rejectRentalRequest = async (rentalId, ownerId) => {
 module.exports = {
   createRental,
   getOwnerRentalRequests,
+  getMyRentalRecords,
   approveRentalRequest,
   rejectRentalRequest,
 };
