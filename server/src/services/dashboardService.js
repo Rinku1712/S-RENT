@@ -47,6 +47,7 @@ const getUserDashboard = async (userId) => {
     totalMyRentalRequests,
     myPendingRentals,
     myApprovedRentals,
+    rentalRevenue,
   ] = await Promise.all([
     // Items listed by logged-in user
     Item.countDocuments({
@@ -100,7 +101,30 @@ const getUserDashboard = async (userId) => {
       isDeleted: false,
       status: 'approved',
     }),
+
+    // Sum rent amounts for completed rentals owned by the logged-in user.
+    Rental.aggregate([
+      {
+        $match: {
+          ownerId: userId,
+          isDeleted: { $ne: true },
+          status: 'completed',
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalRentalRevenue: { $sum: '$totalAmount' },
+          completedRentalCount: { $sum: 1 },
+        },
+      },
+    ]),
   ]);
+
+  const revenueSummary = rentalRevenue[0] || {
+    totalRentalRevenue: 0,
+    completedRentalCount: 0,
+  };
 
   return {
     totalListedItems,
@@ -115,6 +139,8 @@ const getUserDashboard = async (userId) => {
     totalMyRentalRequests,
     myPendingRentals,
     myApprovedRentals,
+    totalRentalRevenue: revenueSummary.totalRentalRevenue,
+    completedRentalCount: revenueSummary.completedRentalCount,
   };
 };
 // Admin Dashboard
