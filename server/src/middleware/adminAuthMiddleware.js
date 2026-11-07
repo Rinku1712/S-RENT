@@ -12,7 +12,8 @@ const adminauthmiddleware = async (req, res, next) => {
   }
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const secret = process.env.JWT_SECRET || 'srent_default_jwt_secret_key_secure_123';
+    const decoded = jwt.verify(token, secret);
 
     // SuperAdmin is configured via env variables and not stored as a normal User document
     if (decoded.id !== 'super-admin' || decoded.isSuperAdmin !== true) {

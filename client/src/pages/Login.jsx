@@ -9,8 +9,6 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
-  ArrowRight,
-  Shield,
 } from 'lucide-react';
 
 /**
@@ -159,15 +157,6 @@ const Login = () => {
               Sign up for free
             </Link>
           </p>
-          <div style={{ marginTop: 14 }}>
-            <Link
-              to="/admin/login"
-              style={{ fontSize: 13, color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-            >
-              <Shield size={13} />
-              <span>SuperAdmin Portal Login &rarr;</span>
-            </Link>
-          </div>
         </div>
       </div>
     </div>

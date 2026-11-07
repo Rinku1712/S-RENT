@@ -16,7 +16,8 @@ const authmiddleware = async (req, res, next) => {
   let decoded;
   try {
     const token = authHeader.split(' ')[1];
-    decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const secret = process.env.JWT_SECRET || 'srent_default_jwt_secret_key_secure_123';
+    decoded = jwt.verify(token, secret);
   } catch (error) {
     return res.status(401).json({
       success: false,

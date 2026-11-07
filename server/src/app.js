@@ -49,7 +49,12 @@ app.use((error, req, res, next) => {
       message: 'Invalid JSON request body',
     });
   }
-  return next(error);
+
+  const statusCode = error.statusCode || error.status || 500;
+  return res.status(statusCode).json({
+    success: false,
+    message: error.message || 'Internal Server Error',
+  });
 });
 
 module.exports = app;

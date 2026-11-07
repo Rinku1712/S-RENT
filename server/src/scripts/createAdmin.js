@@ -1,6 +1,23 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
+
+const envPaths = [
+  path.resolve(__dirname, '.env'),
+  path.resolve(__dirname, '../.env'),
+  path.resolve(__dirname, '../../.env'),
+];
+
+for (const envPath of envPaths) {
+  if (fs.existsSync(envPath)) {
+    require('dotenv').config({ path: envPath });
+    break;
+  }
+}
+if (!process.env.MONGO_URI) {
+  require('dotenv').config();
+}
 
 const User = require('../models/userModel');
 

@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 
 function generateToken(userId, isSuperAdmin = false) {
+  const secret = process.env.JWT_SECRET || 'srent_default_jwt_secret_key_secure_123';
   const payload = {
     id: userId,
   };
@@ -9,8 +10,8 @@ function generateToken(userId, isSuperAdmin = false) {
     payload.isSuperAdmin = true;
   }
 
-  const token = jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: '1h',
+  const token = jwt.sign(payload, secret, {
+    expiresIn: '7d',
   });
 
   return token;

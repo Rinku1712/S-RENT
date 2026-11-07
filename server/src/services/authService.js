@@ -9,6 +9,34 @@ const signup = async (value) => {
   const existingUser = await User.findOne({ email: value.email });
 
   if (existingUser) {
+    if (!existingUser.isEmailVerified) {
+      // User registered previously but has not yet completed OTP verification
+      const otp = crypto.randomInt(100000, 1000000).toString();
+      const emailOTP = await bcrypt.hash(otp, 10);
+      const emailOTPExpiry = new Date(Date.now() + 5 * 60 * 1000);
+
+      existingUser.name = value.name || existingUser.name;
+      existingUser.passwordHash = await bcrypt.hash(value.password, 10);
+      existingUser.phone = value.phone || existingUser.phone;
+      if (value.address) existingUser.address = value.address;
+      existingUser.emailOTP = emailOTP;
+      existingUser.emailOTPExpiry = emailOTPExpiry;
+      existingUser.emailOTPAttempts = 0;
+
+      await existingUser.save();
+      await sendOTPEmail(existingUser.email, otp);
+
+      return {
+        message:
+          'Account already initiated. A new OTP has been sent to complete your email verification.',
+        id: existingUser._id,
+        name: existingUser.name,
+        email: existingUser.email,
+        phone: existingUser.phone,
+        address: existingUser.address,
+      };
+    }
+
     const err = new Error('User Already Exist');
     err.statusCode = 409;
     throw err;
@@ -16,13 +44,13 @@ const signup = async (value) => {
 
   const passwordHash = await bcrypt.hash(value.password, 10);
 
-  // Changes made here: Generate a secure 6-digit OTP
+  // Generate a secure 6-digit OTP
   const otp = crypto.randomInt(100000, 1000000).toString();
 
-  // Changes made here: Hash OTP before storing it in database
+  // Hash OTP before storing it in database
   const emailOTP = await bcrypt.hash(otp, 10);
 
-  // Changes made here: Set OTP expiry to 5 minutes
+  // Set OTP expiry to 5 minutes
   const emailOTPExpiry = new Date(Date.now() + 5 * 60 * 1000);
 
   const newUser = await User.create({
@@ -31,15 +59,13 @@ const signup = async (value) => {
     passwordHash,
     phone: value.phone,
     address: value.address,
-
-    // Changes made here: Save OTP verification details
     isEmailVerified: false,
     emailOTP,
     emailOTPExpiry,
     emailOTPAttempts: 0,
   });
 
-  // Changes made here: Send OTP to user's email
+  // Send OTP to user's email
   await sendOTPEmail(newUser.email, otp);
 
   return {
@@ -53,7 +79,7 @@ const signup = async (value) => {
   };
 };
 
-// Login function (unchanged for now)
+// Login function
 const login = async (value) => {
   const user = await User.findOne({
     email: value.email,
@@ -66,7 +92,9 @@ const login = async (value) => {
   }
 
   if (user.accountStatus !== 'active') {
-    throw new Error('Your account is not active');
+    const err = new Error('Your account is not active');
+    err.statusCode = 403;
+    throw err;
   }
 
   const isMatch = await bcrypt.compare(value.password, user.passwordHash);
@@ -74,6 +102,12 @@ const login = async (value) => {
   if (!isMatch) {
     const err = new Error('Invalid email or password');
     err.statusCode = 404;
+    throw err;
+  }
+
+  if (!user.isEmailVerified) {
+    const err = new Error('Please verify your email before logging in');
+    err.statusCode = 403;
     throw err;
   }
 
@@ -88,6 +122,7 @@ const login = async (value) => {
     name: user.name,
     email: user.email,
     phone: user.phone,
+    role: user.role,
   };
 };
 
@@ -132,7 +167,7 @@ const verifyOTP = async (value) => {
     throw err;
   }
 
-  const isOTPMatch = await bcrypt.compare(value.otp, user.emailOTP);
+  const isOTPMatch = await bcrypt.compare(String(value.otp), user.emailOTP);
 
   if (!isOTPMatch) {
     user.emailOTPAttempts += 1;
