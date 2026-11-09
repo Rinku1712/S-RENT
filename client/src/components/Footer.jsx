@@ -1,18 +1,11 @@
 import { Link } from 'react-router-dom';
-import {
-  ShieldCheck,
-  CheckCircle2,
-  Lock,
-  ArrowRight,
-  Package,
-} from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 
 /**
  * Footer Component
  * Features:
  * - SRENT brand wordmark & official tagline: "Sab Rent Par, Saste Rent Par"
  * - Marketplace links, User links, Trust & Security guarantees
- * - Direct link to the SuperAdmin Console
  * - 100% Lucide React icons, zero emojis
  */
 const Footer = () => {
@@ -93,24 +86,12 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Col 4: Platform Security & SuperAdmin */}
+          {/* Col 4: Platform Safety */}
           <div className="footer-col">
-            <h4>Safety & Administration</h4>
-            <p style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 14 }}>
-              Our transparent peer-to-peer system ensures fair daily pricing, item inspection periods, and verified transactions.
+            <h4>Safety & Assurance</h4>
+            <p style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 14, color: 'var(--text-secondary)' }}>
+              Our transparent peer-to-peer system ensures fair daily pricing, item inspection periods, and verified transactions across all categories.
             </p>
-
-            <Link
-              to="/admin/login"
-              className="btn btn-secondary btn-sm"
-              style={{ width: '100%', justifyContent: 'space-between' }}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Lock size={14} className="text-red" />
-                SuperAdmin Console
-              </span>
-              <ArrowRight size={14} />
-            </Link>
           </div>
         </div>
 
