@@ -1,5 +1,6 @@
 // Configure the Express application and middleware.
 const express = require('express');
+const cors = require('cors');
 const path = require('path');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -11,15 +12,7 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const app = express();
 
 // Enable CORS for frontend requests
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
+app.use(cors());
 
 app.use(express.json());
 app.use(
