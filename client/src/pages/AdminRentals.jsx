@@ -408,3 +408,4 @@ const AdminRentals = () => {
 };
 
 export default AdminRentals;
+

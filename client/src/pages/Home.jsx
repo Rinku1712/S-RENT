@@ -28,7 +28,7 @@ import {
   Bike,
   Speaker,
 } from 'lucide-react';
-import heroImage from '../assets/hero.png';
+import srentLogo from '../assets/srent-logo.svg';
 
 /**
  * Public Homepage Component (OLX + Amazon + Modern Rental Standard)
@@ -218,29 +218,104 @@ const Home = () => {
               )}
             </div>
 
-            {/* Right Visual Image */}
+            {/* Right Branded Hero Showcase with Official Named Logo */}
             <div className="hero-visual-col">
-              <div className="hero-visual-card">
-                <img
-                  src={heroImage}
-                  alt="Rental Marketplace Gear"
-                  className="hero-img"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
-                <div className="hero-overlay-pill">
-                  <div className="hero-pill-icon">
-                    <ShieldCheck size={22} />
+              <div className="hero-brand-card">
+                {/* Official Named Logo Header */}
+                <div className="hero-brand-header">
+                  <img
+                    src={srentLogo}
+                    alt="S-RENT — Sab Rent Par, Saste Rent Par"
+                    className="hero-named-logo"
+                  />
+                  <div className="hero-brand-verified-tag">
+                    <ShieldCheck size={14} />
+                    <span>Official Peer Network</span>
                   </div>
-                  <div>
-                    <strong style={{ fontSize: 13, color: 'var(--text-primary)', display: 'block' }}>
-                      100% Protected Peer Rentals
-                    </strong>
-                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                      Refundable security deposits and OTP verification on every handover.
-                    </span>
+                </div>
+
+                <div className="hero-brand-body">
+                  <p className="hero-brand-mission">
+                    India’s fastest-growing peer rental platform. Access professional gear, cameras, laptops, and tools near you without the burden of buying.
+                  </p>
+
+                  {/* 4 Feature Trust Pillars */}
+                  <div className="hero-brand-pillars">
+                    <div className="pillar-item">
+                      <div className="pillar-icon">
+                        <Wallet size={16} />
+                      </div>
+                      <div className="pillar-content">
+                        <strong>100% Refundable</strong>
+                        <span>Safe security deposit</span>
+                      </div>
+                    </div>
+
+                    <div className="pillar-item">
+                      <div className="pillar-icon">
+                        <ShieldCheck size={16} />
+                      </div>
+                      <div className="pillar-content">
+                        <strong>OTP Handover</strong>
+                        <span>Secure check-in code</span>
+                      </div>
+                    </div>
+
+                    <div className="pillar-item">
+                      <div className="pillar-icon">
+                        <TrendingUp size={16} />
+                      </div>
+                      <div className="pillar-content">
+                        <strong>Save Up To 90%</strong>
+                        <span>Compared to buying</span>
+                      </div>
+                    </div>
+
+                    <div className="pillar-item">
+                      <div className="pillar-icon">
+                        <Clock size={16} />
+                      </div>
+                      <div className="pillar-content">
+                        <strong>Flexible Duration</strong>
+                        <span>Daily & weekly rentals</span>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Popular Rental Gear Chips */}
+                  <div className="hero-brand-chips-row">
+                    <span className="chips-title">Rent Top Gear:</span>
+                    <div className="chips-list">
+                      <Link to="/items?search=Camera" className="hero-gear-chip">
+                        <Camera size={13} />
+                        <span>Cameras</span>
+                      </Link>
+                      <Link to="/items?search=Laptop" className="hero-gear-chip">
+                        <Laptop size={13} />
+                        <span>Laptops</span>
+                      </Link>
+                      <Link to="/items?search=PS5" className="hero-gear-chip">
+                        <Gamepad2 size={13} />
+                        <span>Gaming</span>
+                      </Link>
+                      <Link to="/items?search=Bike" className="hero-gear-chip">
+                        <Bike size={13} />
+                        <span>Vehicles</span>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Quick-Action CTAs */}
+                <div className="hero-brand-actions">
+                  <Link to="/items" className="btn btn-primary btn-sm hero-brand-btn">
+                    <span>Browse All Gear</span>
+                    <ArrowRight size={14} />
+                  </Link>
+                  <Link to="/create-item" className="btn btn-secondary btn-sm hero-brand-btn">
+                    <Sparkles size={14} />
+                    <span>List Item & Earn</span>
+                  </Link>
                 </div>
               </div>
             </div>

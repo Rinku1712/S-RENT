@@ -50,3 +50,4 @@ export const getAdminRentals = async (params = {}) => {
   const response = await api.get('/api/admin/rentals', { params: cleanParams });
   return response.data;
 };
+
