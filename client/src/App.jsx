@@ -1,13 +1,14 @@
 import { Component } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import AdminLayout from './components/AdminLayout';
 import { AlertCircle, Search, Home as HomeIcon } from 'lucide-react';
 
-// Public Pages
+// Public Customer Pages
 import Home from './pages/Home';
 import Browse from './pages/Browse';
 import ItemDetails from './pages/ItemDetails';
@@ -16,24 +17,28 @@ import Signup from './pages/Signup';
 import VerifyOTP from './pages/VerifyOTP';
 import AdminLogin from './pages/AdminLogin';
 
-// Protected User Pages
+// Protected Customer Pages
 import CreateItem from './pages/CreateItem';
 import UserDashboard from './pages/UserDashboard';
 import Profile from './pages/Profile';
 
-// Protected SuperAdmin Pages
+// Protected SuperAdmin Enterprise Pages
 import AdminDashboard from './pages/AdminDashboard';
+import AdminUsers from './pages/AdminUsers';
+import AdminItems from './pages/AdminItems';
+import AdminRentals from './pages/AdminRentals';
 import AdminCategories from './pages/AdminCategories';
+import AdminSettings from './pages/AdminSettings';
 
 // Error Boundary to prevent blank screen crashes
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
+  static getDerivedStateFromError() {
+    return { hasError: true };
   }
 
   componentDidCatch(error, errorInfo) {
@@ -70,7 +75,7 @@ class ErrorBoundary extends Component {
   }
 }
 
-// 404 Not Found Page Component (Zero emojis, Lucide icon)
+// 404 Not Found Page Component
 const NotFound = () => (
   <div className="container" style={{ padding: '80px 20px', textAlign: 'center' }}>
     <div className="card" style={{ maxWidth: 500, margin: '0 auto', padding: 40 }}>
@@ -89,89 +94,101 @@ const NotFound = () => (
   </div>
 );
 
+// App shell with conditional customer header & footer vs dedicated admin layout
+const AppContent = () => {
+  const location = useLocation();
+  const isAdminPath = location.pathname.startsWith('/admin');
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {/* Show Public Marketplace Navbar only for customer routes */}
+      {!isAdminPath && <Navbar />}
+
+      {/* Main Application Routes */}
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <Routes>
+          {/* 1. Public Customer Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/items" element={<Browse />} />
+          <Route path="/browse" element={<Browse />} />
+          <Route path="/items/:id" element={<ItemDetails />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/verify-otp" element={<VerifyOTP />} />
+
+          {/* 2. Public SuperAdmin Portal Login */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+
+          {/* 3. Protected SuperAdmin Console Routes (Nested under AdminLayout) */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminLayout />
+              </AdminRoute>
+            }
+          >
+            <Route index element={<AdminDashboard />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="items" element={<AdminItems />} />
+            <Route path="rentals" element={<AdminRentals />} />
+            <Route path="categories" element={<AdminCategories />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
+
+          {/* 4. Protected Customer Member Routes */}
+          <Route
+            path="/create-item"
+            element={
+              <ProtectedRoute>
+                <CreateItem />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <UserDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user/dashboard"
+            element={
+              <ProtectedRoute>
+                <UserDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 5. Fallback 404 Route */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+
+      {/* Show Public Marketplace Footer only for customer routes */}
+      {!isAdminPath && <Footer />}
+    </div>
+  );
+};
+
 function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
         <WishlistProvider>
           <BrowserRouter>
-            <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-              {/* Sticky Navigation Bar */}
-              <Navbar />
-
-              {/* Main Application Routes */}
-              <main style={{ flex: 1 }}>
-                <Routes>
-                  {/* 1. Public Routes (Accessible without login) */}
-                  <Route path="/" element={<Home />} />
-                  <Route path="/items" element={<Browse />} />
-                  <Route path="/browse" element={<Browse />} />
-                  <Route path="/items/:id" element={<ItemDetails />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="/verify-otp" element={<VerifyOTP />} />
-                  <Route path="/admin/login" element={<AdminLogin />} />
-
-                  {/* 2. Protected Registered User Routes */}
-                  <Route
-                    path="/create-item"
-                    element={
-                      <ProtectedRoute>
-                        <CreateItem />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <UserDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/user/dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <UserDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/profile"
-                    element={
-                      <ProtectedRoute>
-                        <Profile />
-                      </ProtectedRoute>
-                    }
-                  />
-
-                  {/* 3. Protected SuperAdmin Routes */}
-                  <Route
-                    path="/admin/dashboard"
-                    element={
-                      <AdminRoute>
-                        <AdminDashboard />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/categories"
-                    element={
-                      <AdminRoute>
-                        <AdminCategories />
-                      </AdminRoute>
-                    }
-                  />
-
-                  {/* 4. Fallback 404 Route */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </main>
-
-              {/* Shared Footer */}
-              <Footer />
-            </div>
+            <AppContent />
           </BrowserRouter>
         </WishlistProvider>
       </AuthProvider>

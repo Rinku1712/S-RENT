@@ -158,6 +158,9 @@ const getAdminDashboard = async () => {
     approvedRentals,
     rejectedRentals,
     completedRentals,
+    recentRentals,
+    recentUsers,
+    revenueAgg,
   ] = await Promise.all([
     // Total registered users (SuperAdmin is not included)
     User.countDocuments({ isDeleted: false }),
@@ -218,7 +221,40 @@ const getAdminDashboard = async () => {
       isDeleted: false,
       status: 'completed',
     }),
+
+    // Recent 5 rental bookings
+    Rental.find({ isDeleted: false })
+      .populate('itemId', 'name pricePerDay images')
+      .populate('renterId', 'name email')
+      .populate('ownerId', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(5),
+
+    // Recent 5 registered users
+    User.find({ isDeleted: false })
+      .select('name email phone accountStatus createdAt')
+      .sort({ createdAt: -1 })
+      .limit(5),
+
+    // Real gross volume calculation
+    Rental.aggregate([
+      {
+        $match: {
+          isDeleted: { $ne: true },
+          status: { $in: ['approved', 'completed'] },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalRentalVolume: { $sum: '$totalAmount' },
+          totalSecurityHeld: { $sum: '$securityDeposit' },
+        },
+      },
+    ]),
   ]);
+
+  const rev = revenueAgg[0] || { totalRentalVolume: 0, totalSecurityHeld: 0 };
 
   return {
     totalUsers,
@@ -233,6 +269,10 @@ const getAdminDashboard = async () => {
     approvedRentals,
     rejectedRentals,
     completedRentals,
+    recentRentals,
+    recentUsers,
+    totalRentalVolume: rev.totalRentalVolume,
+    totalSecurityHeld: rev.totalSecurityHeld,
   };
 };
 

@@ -11,8 +11,15 @@ const api = axios.create({
 // Interceptor to automatically attach JWT token
 api.interceptors.request.use(
   (config) => {
-    // Check for user token or admin token
-    const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
+    // If requesting admin route or category management, prefer adminToken
+    const isAdminUrl =
+      config.url?.includes('/admin') ||
+      config.url?.includes('/dashboard/admin') ||
+      (config.url?.includes('/category') && config.method !== 'get');
+    const token = isAdminUrl
+      ? localStorage.getItem('adminToken') || localStorage.getItem('token')
+      : localStorage.getItem('token') || localStorage.getItem('adminToken');
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

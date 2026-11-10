@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import {
   getCategories,
   createCategory,
@@ -11,20 +10,19 @@ import {
   Plus,
   Edit2,
   Trash2,
-  ArrowLeft,
   CheckCircle2,
   AlertCircle,
   X,
   Package,
+  RefreshCw,
 } from 'lucide-react';
 
 /**
- * SuperAdmin Category Management Page
- * URL: /admin/categories
+ * SuperAdmin Category Management
  * Features:
- * - Full CRUD for rental marketplace categories
- * - Create & Edit Modal
- * - Delete category with confirmation
+ * - Create, update, and delete rental categories
+ * - Modal form with validation
+ * - Synchronous image preview
  * - Zero emojis, 100% Lucide React icons
  */
 const AdminCategories = () => {
@@ -99,178 +97,233 @@ const AdminCategories = () => {
         await updateCategory(editingCategory._id, {
           name: formName.trim(),
           description: formDescription.trim(),
-          image: formImage.trim() || null,
+          image: formImage.trim() || undefined,
         });
-        setSuccessMsg(`Category "${formName.trim()}" updated successfully!`);
+        setSuccessMsg(`Category "${formName}" updated successfully.`);
       } else {
         await createCategory({
           name: formName.trim(),
           description: formDescription.trim(),
-          image: formImage.trim() || null,
+          image: formImage.trim() || undefined,
         });
-        setSuccessMsg(`Category "${formName.trim()}" created successfully!`);
+        setSuccessMsg(`Category "${formName}" created successfully.`);
       }
 
       closeModal();
       fetchCats();
+      setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err) {
-      setError(err.message || 'Operation failed. Please try again.');
+      setError(err.message || 'Operation failed.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (catId, catName) => {
-    if (!window.confirm(`Are you sure you want to remove category "${catName}"?`)) {
+  const handleDelete = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to delete category "${name}"? This action cannot be undone.`)) {
       return;
     }
 
     try {
       setError(null);
-      await deleteCategory(catId);
-      setSuccessMsg(`Category "${catName}" deleted successfully.`);
+      await deleteCategory(id);
+      setSuccessMsg(`Category "${name}" deleted.`);
       fetchCats();
+      setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err) {
-      setError(err.message || 'Failed to remove category.');
+      setError(err.message || 'Failed to delete category.');
     }
   };
 
   return (
-    <div className="container" style={{ padding: '36px 20px', maxWidth: 1140 }}>
-      {/* Header */}
+    <div>
+      {/* Top Header */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: 24,
           flexWrap: 'wrap',
-          gap: 16,
+          gap: 12,
+          marginBottom: 20,
         }}
       >
         <div>
-          <Link
-            to="/admin/dashboard"
-            style={{
-              color: 'var(--text-secondary)',
-              fontSize: 13,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              marginBottom: 4,
-            }}
-          >
-            <ArrowLeft size={13} />
-            <span>Back to Admin Dashboard</span>
-          </Link>
-          <h1 style={{ fontSize: 24, fontWeight: 800, margin: '2px 0' }}>
-            Category Management
-          </h1>
-          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: 13 }}>
-            Organize the marketplace taxonomy for renters and item owners
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 4px', color: '#0F172A' }}>
+            Category Taxonomies
+          </h2>
+          <p style={{ margin: 0, fontSize: '0.84rem', color: '#64748B' }}>
+            Configure marketplace rental categories, icons, and discovery metadata
           </p>
         </div>
 
-        <button onClick={openCreateModal} className="btn btn-primary btn-sm">
-          <Plus size={15} />
-          <span>Add New Category</span>
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            type="button"
+            onClick={fetchCats}
+            className="btn btn-secondary btn-sm"
+            title="Refresh categories"
+          >
+            <RefreshCw size={14} />
+            <span>Refresh</span>
+          </button>
+          <button type="button" onClick={openCreateModal} className="btn btn-primary btn-sm">
+            <Plus size={15} />
+            <span>+ Add New Category</span>
+          </button>
+        </div>
       </div>
 
-      {error && (
-        <div className="alert alert-danger">
-          <AlertCircle size={16} />
-          <span>{error}</span>
-        </div>
-      )}
-
       {successMsg && (
-        <div className="alert alert-success">
+        <div className="alert alert-success" style={{ marginBottom: 16 }}>
           <CheckCircle2 size={16} />
           <span>{successMsg}</span>
         </div>
       )}
 
-      {/* Categories Table Card */}
-      <div className="data-table-card">
+      {error && (
+        <div className="alert alert-danger" style={{ marginBottom: 16 }}>
+          <AlertCircle size={16} />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Categories Table */}
+      <div className="admin-table-wrapper">
         {loading ? (
-          <div className="spinner"></div>
+          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <div className="spinner"></div>
+            <p style={{ marginTop: 14, color: '#64748B' }}>Loading categories...</p>
+          </div>
         ) : categories.length === 0 ? (
-          <div className="empty-state-box">
-            <div className="empty-icon-circle">
-              <Layers size={28} />
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <div className="empty-icon-circle" style={{ margin: '0 auto 14px' }}>
+              <Layers size={32} />
             </div>
-            <h3>No Categories Found</h3>
-            <p>Create your first category so users can categorize their listings.</p>
-            <button onClick={openCreateModal} className="btn btn-primary">
-              Create First Category
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 6px' }}>
+              No Categories Found
+            </h3>
+            <p style={{ margin: '0 0 16px', fontSize: '0.85rem', color: '#64748B' }}>
+              Create categories so community owners can classify their gear.
+            </p>
+            <button type="button" onClick={openCreateModal} className="btn btn-primary btn-sm">
+              <Plus size={14} />
+              <span>Create First Category</span>
             </button>
           </div>
         ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Category Name</th>
-                <th>Slug</th>
-                <th>Description</th>
-                <th>Status</th>
-                <th style={{ textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {categories.map((cat) => (
-                <tr key={cat._id}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <Package size={16} className="text-red" />
-                      <strong style={{ fontSize: 14 }}>{cat.name}</strong>
-                    </div>
-                  </td>
-                  <td>
-                    <code style={{ fontSize: 12, backgroundColor: 'var(--bg-section)', padding: '2px 6px', borderRadius: 4 }}>
-                      {cat.slug}
-                    </code>
-                  </td>
-                  <td style={{ color: 'var(--text-secondary)', fontSize: 13, maxWidth: 320 }}>
-                    {cat.description || 'No description provided'}
-                  </td>
-                  <td>
-                    <span className="badge badge-success">Active</span>
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'inline-flex', gap: 6 }}>
-                      <button
-                        onClick={() => openEditModal(cat)}
-                        className="btn btn-secondary btn-sm"
-                        title="Edit Category"
-                      >
-                        <Edit2 size={13} />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleDelete(cat._id, cat.name)}
-                        className="btn btn-danger btn-sm"
-                        title="Delete Category"
-                      >
-                        <Trash2 size={13} />
-                        <span>Delete</span>
-                      </button>
-                    </div>
-                  </td>
+          <div className="table-responsive">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Category Name</th>
+                  <th>Slug</th>
+                  <th>Description</th>
+                  <th>Image / Icon</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {categories.map((cat) => (
+                  <tr key={cat._id}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div
+                          style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 8,
+                            background: '#FEE2E2',
+                            color: '#E53935',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <Layers size={18} />
+                        </div>
+                        <strong style={{ color: '#0F172A', fontSize: '0.9rem' }}>
+                          {cat.name}
+                        </strong>
+                      </div>
+                    </td>
+
+                    <td>
+                      <span className="badge badge-secondary" style={{ fontFamily: 'monospace' }}>
+                        {cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-')}
+                      </span>
+                    </td>
+
+                    <td style={{ fontSize: '0.84rem', color: '#64748B', maxWidth: 300 }}>
+                      {cat.description || 'No description provided.'}
+                    </td>
+
+                    <td>
+                      {cat.image ? (
+                        <img
+                          src={cat.image}
+                          alt={cat.name}
+                          style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 6, border: '1px solid #E2E8F0' }}
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>None</span>
+                      )}
+                    </td>
+
+                    <td>
+                      <span
+                        className={`badge ${
+                          cat.isActive !== false ? 'badge-success' : 'badge-warning'
+                        }`}
+                      >
+                        ● {cat.isActive !== false ? 'Active' : 'Disabled'}
+                      </span>
+                    </td>
+
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(cat)}
+                          className="btn btn-secondary btn-sm"
+                          title="Edit category"
+                        >
+                          <Edit2 size={13} />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(cat._id, cat.name)}
+                          className="btn btn-danger btn-sm"
+                          title="Delete category"
+                        >
+                          <Trash2 size={13} />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
-      {/* Create / Edit Modal */}
+      {/* Create / Edit Category Modal */}
       {modalOpen && (
         <div className="modal-backdrop" onClick={closeModal}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
             <div className="modal-header">
-              <h3>{editingCategory ? 'Edit Category' : 'Create New Category'}</h3>
-              <button onClick={closeModal} className="modal-close-btn">
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
+                {editingCategory ? `Edit: ${editingCategory.name}` : 'Add New Category'}
+              </h3>
+              <button type="button" onClick={closeModal} className="modal-close-btn">
                 <X size={18} />
               </button>
             </div>
@@ -281,7 +334,7 @@ const AdminCategories = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Photography Gear"
+                  placeholder="e.g. Photography & Cameras"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   className="form-input"
@@ -290,10 +343,10 @@ const AdminCategories = () => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Description (Optional)</label>
+                <label className="form-label">Description</label>
                 <textarea
                   rows="3"
-                  placeholder="Brief description of items included in this category..."
+                  placeholder="Short description of items categorized under this taxonomy..."
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
                   className="form-textarea"
@@ -301,34 +354,31 @@ const AdminCategories = () => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Image URL (Optional)</label>
+                <label className="form-label">Image or Icon URL (Optional)</label>
                 <input
                   type="url"
-                  placeholder="https://example.com/category-icon.png"
+                  placeholder="https://images.unsplash.com/..."
                   value={formImage}
                   onChange={(e) => setFormImage(e.target.value)}
                   className="form-input"
                 />
               </div>
 
-              <div className="modal-actions">
+              <div className="modal-actions" style={{ marginTop: 20 }}>
                 <button
                   type="button"
                   onClick={closeModal}
                   className="btn btn-secondary"
+                  disabled={submitting}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting}
                   className="btn btn-primary"
+                  disabled={submitting}
                 >
-                  {submitting
-                    ? 'Saving...'
-                    : editingCategory
-                    ? 'Update Category'
-                    : 'Create Category'}
+                  {submitting ? 'Saving...' : editingCategory ? 'Save Changes' : 'Create Category'}
                 </button>
               </div>
             </form>
