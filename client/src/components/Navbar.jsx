@@ -1,34 +1,40 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useWishlist } from '../context/WishlistContext';
 import {
   Search,
-  Package,
-  User,
   LogIn,
   UserPlus,
   LogOut,
   Menu,
   X,
   LayoutDashboard,
-  ShoppingBag,
-  HelpCircle,
   PlusCircle,
   Shield,
   Layers,
+  Heart,
+  User,
+  Inbox,
+  ShoppingBag,
+  Sparkles,
 } from 'lucide-react';
 
 /**
- * Navbar Component
+ * Navbar Component (OLX / Amazon Hybrid)
  * Features:
- * - Minimalist SRENT logo with "Sab Rent Par, Saste Rent Par" tagline
- * - Navigation links to Home, Explore Items, Categories, and How It Works
- * - Context-aware auth actions (Guest vs. Member vs. SuperAdmin)
- * - Mobile responsive drawer with Lucide React icons (no emojis)
+ * - Brand logo & official tagline
+ * - Quick keyword search bar that redirects to /items
+ * - Direct Wishlist heart icon with live count badge
+ * - Primary "+ List Item" button
+ * - User Profile menu / Guest auth actions
+ * - Mobile responsive drawer
  */
 const Navbar = () => {
   const { user, isSuperAdmin, isAuthenticated, isUser, logout } = useAuth();
+  const { wishlistCount } = useWishlist();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -36,6 +42,16 @@ const Navbar = () => {
     logout();
     setMobileMenuOpen(false);
     navigate('/');
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/items?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+    } else {
+      navigate('/items');
+    }
   };
 
   const isActive = (path) => location.pathname === path;
@@ -56,7 +72,20 @@ const Navbar = () => {
           </div>
         </Link>
 
-        {/* Center: Desktop Navigation Links */}
+        {/* Center-Left: Quick Search Bar */}
+        <form onSubmit={handleSearchSubmit} className="navbar-search-bar">
+          <input
+            type="text"
+            placeholder="Search items, cameras, tools, laptops..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <button type="submit" aria-label="Search">
+            <Search size={15} />
+          </button>
+        </form>
+
+        {/* Center-Right: Desktop Navigation Links */}
         <nav className="desktop-nav">
           <Link to="/" className={`nav-item ${isActive('/') ? 'active' : ''}`}>
             Home
@@ -74,26 +103,6 @@ const Navbar = () => {
             How It Works
           </a>
 
-          {/* User Links when logged in as regular member */}
-          {isUser && (
-            <>
-              <Link
-                to="/create-item"
-                className={`nav-item ${isActive('/create-item') ? 'active' : ''}`}
-              >
-                <PlusCircle size={15} className="text-red" />
-                List Item
-              </Link>
-              <Link
-                to="/dashboard"
-                className={`nav-item ${isActive('/dashboard') || isActive('/user/dashboard') ? 'active' : ''}`}
-              >
-                <LayoutDashboard size={15} />
-                My Dashboard
-              </Link>
-            </>
-          )}
-
           {/* SuperAdmin Links */}
           {isSuperAdmin && (
             <>
@@ -101,25 +110,46 @@ const Navbar = () => {
                 to="/admin/dashboard"
                 className={`nav-item ${isActive('/admin/dashboard') ? 'active' : ''}`}
               >
-                <Shield size={15} className="text-red" />
+                <Shield size={14} className="text-red" />
                 Admin Console
               </Link>
               <Link
                 to="/admin/categories"
                 className={`nav-item ${isActive('/admin/categories') ? 'active' : ''}`}
               >
-                <Layers size={15} />
+                <Layers size={14} />
                 Categories
               </Link>
             </>
           )}
         </nav>
 
-        {/* Right: Authentication Actions */}
+        {/* Right: Actions (Wishlist + Auth/User + List Item) */}
         <div className="auth-actions">
+          {/* Wishlist Link */}
+          <Link
+            to={isAuthenticated ? "/dashboard?tab=wishlist" : "/login"}
+            className="nav-wishlist-btn"
+            title="My Saved Wishlist"
+          >
+            <Heart size={18} />
+            {wishlistCount > 0 && <span className="nav-badge-count">{wishlistCount}</span>}
+          </Link>
+
+          {/* "+ List Item" CTA */}
+          <Link to="/create-item" className="btn btn-primary btn-sm">
+            <PlusCircle size={15} />
+            <span>List Item</span>
+          </Link>
+
+          {/* Auth State */}
           {isAuthenticated ? (
             <div className="user-nav-dropdown">
-              <Link to={isSuperAdmin ? '/admin/dashboard' : '/profile'} className="user-pill">
+              <Link
+                to={isSuperAdmin ? '/admin/dashboard' : '/dashboard'}
+                className="user-pill"
+                title="Open Dashboard"
+              >
                 <div className="user-avatar-circle">
                   {user?.name ? user.name[0].toUpperCase() : 'U'}
                 </div>
@@ -132,18 +162,18 @@ const Navbar = () => {
                 className="btn btn-secondary btn-sm"
                 title="Sign Out"
               >
-                <LogOut size={15} />
+                <LogOut size={14} />
                 <span>Logout</span>
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Link to="/login" className="btn btn-secondary btn-sm">
-                <LogIn size={15} />
+                <LogIn size={14} />
                 <span>Login</span>
               </Link>
-              <Link to="/signup" className="btn btn-primary btn-sm">
-                <UserPlus size={15} />
+              <Link to="/signup" className="btn btn-outline btn-sm">
+                <UserPlus size={14} />
                 <span>Sign Up</span>
               </Link>
             </div>
@@ -155,13 +185,26 @@ const Navbar = () => {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle navigation menu"
           >
-            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </div>
 
       {/* Mobile Navigation Drawer */}
       <div className={`mobile-drawer ${mobileMenuOpen ? 'open' : ''}`}>
+        <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          <input
+            type="text"
+            placeholder="Search equipment, tools, tech..."
+            className="form-input"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <button type="submit" className="btn btn-primary btn-sm">
+            <Search size={16} />
+          </button>
+        </form>
+
         <Link
           to="/"
           onClick={() => setMobileMenuOpen(false)}
@@ -172,42 +215,36 @@ const Navbar = () => {
         <Link
           to="/items"
           onClick={() => setMobileMenuOpen(false)}
-          className={`mobile-drawer-link ${isActive('/items') || isActive('/browse') ? 'active' : ''}`}
+          className={`mobile-drawer-link ${isActive('/items') ? 'active' : ''}`}
         >
-          Explore Items
+          Explore All Items
         </Link>
-        <a
-          href="/#categories"
+        <Link
+          to="/create-item"
           onClick={() => setMobileMenuOpen(false)}
-          className="mobile-drawer-link"
+          className={`mobile-drawer-link ${isActive('/create-item') ? 'active' : ''}`}
         >
-          Categories
-        </a>
-        <a
-          href="/#how-it-works"
-          onClick={() => setMobileMenuOpen(false)}
-          className="mobile-drawer-link"
-        >
-          How It Works
-        </a>
+          <PlusCircle size={16} className="text-red" />
+          List Your Item for Rent
+        </Link>
 
-        {isUser && (
+        {isAuthenticated ? (
           <>
-            <Link
-              to="/create-item"
-              onClick={() => setMobileMenuOpen(false)}
-              className="mobile-drawer-link"
-            >
-              <PlusCircle size={16} className="text-red" />
-              List an Item for Rent
-            </Link>
             <Link
               to="/dashboard"
               onClick={() => setMobileMenuOpen(false)}
               className="mobile-drawer-link"
             >
               <LayoutDashboard size={16} />
-              My Dashboard
+              Member Dashboard
+            </Link>
+            <Link
+              to="/dashboard?tab=wishlist"
+              onClick={() => setMobileMenuOpen(false)}
+              className="mobile-drawer-link"
+            >
+              <Heart size={16} />
+              Saved Wishlist ({wishlistCount})
             </Link>
             <Link
               to="/profile"
@@ -215,63 +252,49 @@ const Navbar = () => {
               className="mobile-drawer-link"
             >
               <User size={16} />
-              My Profile
+              Profile Settings
             </Link>
-          </>
-        )}
-
-        {isSuperAdmin && (
-          <>
-            <Link
-              to="/admin/dashboard"
-              onClick={() => setMobileMenuOpen(false)}
-              className="mobile-drawer-link"
-            >
-              <Shield size={16} className="text-red" />
-              Admin Dashboard
-            </Link>
-            <Link
-              to="/admin/categories"
-              onClick={() => setMobileMenuOpen(false)}
-              className="mobile-drawer-link"
-            >
-              <Layers size={16} />
-              Manage Categories
-            </Link>
-          </>
-        )}
-
-        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, marginTop: 4 }}>
-          {isAuthenticated ? (
+            {isSuperAdmin && (
+              <Link
+                to="/admin/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="mobile-drawer-link"
+              >
+                <Shield size={16} className="text-red" />
+                SuperAdmin Portal
+              </Link>
+            )}
             <button
               onClick={handleLogout}
-              className="btn btn-secondary"
-              style={{ width: '100%', justifyContent: 'center' }}
+              className="btn btn-secondary btn-sm"
+              style={{ width: '100%', marginTop: 8 }}
             >
               <LogOut size={16} />
-              Logout ({user?.name || 'Account'})
+              <span>Log Out ({user?.name || 'Account'})</span>
             </button>
-          ) : (
-            <div style={{ display: 'flex', gap: 10 }}>
-              <Link
-                to="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="btn btn-secondary"
-                style={{ flex: 1 }}
-              >
-                Login
-              </Link>
-              <Link
-                to="/signup"
-                onClick={() => setMobileMenuOpen(false)}
-                className="btn btn-primary"
-                style={{ flex: 1 }}
-              >
-                Sign Up
-              </Link>
-            </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 10 }}>
+            <Link
+              to="/login"
+              onClick={() => setMobileMenuOpen(false)}
+              className="btn btn-secondary btn-sm"
+              style={{ justifyContent: 'center' }}
+            >
+              <LogIn size={15} />
+              <span>Login</span>
+            </Link>
+            <Link
+              to="/signup"
+              onClick={() => setMobileMenuOpen(false)}
+              className="btn btn-primary btn-sm"
+              style={{ justifyContent: 'center' }}
+            >
+              <UserPlus size={15} />
+              <span>Sign Up</span>
+            </Link>
+          </div>
+        )}
       </div>
     </header>
   );

@@ -13,16 +13,22 @@ import {
   AlertCircle,
   ArrowLeft,
   Info,
+  Upload,
+  X,
+  Camera,
+  ShieldCheck,
+  TrendingUp,
+  HelpCircle,
+  Sparkles,
 } from 'lucide-react';
 
 /**
- * List Item / Create Listing Page
- * URL: /create-item
- * Features:
- * - Match backend Item schema and Joi validation
- * - Dynamic category selection
- * - Daily & Weekly rental rates + Refundable deposit
- * - Pickup location (City, State, Postal Code)
+ * Premium S-RENT Listing Creation Page
+ * Matches OLX / Amazon seller experience:
+ * - Structured multi-card form layout
+ * - Interactive multi-image upload with live image previews & remove button
+ * - Security deposit calculator & renter protection tips
+ * - Right sidebar with owner earnings potential & photography checklist
  * - Zero emojis, 100% Lucide React icons
  */
 const CreateItem = () => {
@@ -31,6 +37,7 @@ const CreateItem = () => {
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -82,7 +89,39 @@ const CreateItem = () => {
   };
 
   const handleImageFilesChange = (e) => {
-    setImageFiles(Array.from(e.target.files || []));
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    if (imageFiles.length + files.length > 10) {
+      setError('You can upload a maximum of 10 images.');
+      return;
+    }
+
+    for (const f of files) {
+      if (!isSupportedImage(f)) {
+        setError(`Supported formats: ${supportedImageFormats}.`);
+        return;
+      }
+      if (!isImageWithinSizeLimit(f)) {
+        setError('Each image must be 5 MB or smaller.');
+        return;
+      }
+    }
+
+    const newFiles = [...imageFiles, ...files];
+    setImageFiles(newFiles);
+
+    // Generate local previews
+    const newPreviews = files.map((file) => URL.createObjectURL(file));
+    setImagePreviews((prev) => [...prev, ...newPreviews]);
+  };
+
+  const removeImageAt = (index) => {
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => {
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -96,18 +135,18 @@ const CreateItem = () => {
     }
 
     if (!formData.description.trim()) {
-      setError('Please provide a descriptive explanation of your equipment.');
+      setError('Please provide a detailed description of your rental equipment.');
       return;
     }
 
     if (!formData.categoryId) {
-      setError('Please select a valid category.');
+      setError('Please select a valid equipment category.');
       return;
     }
 
     const priceDay = Number(formData.pricePerDay);
     if (isNaN(priceDay) || priceDay <= 0) {
-      setError('Daily rental price must be greater than 0.');
+      setError('Daily rental rate must be greater than 0.');
       return;
     }
 
@@ -118,22 +157,7 @@ const CreateItem = () => {
     }
 
     if (!formData.city.trim() || !formData.state.trim()) {
-      setError('City and State are required for renters to locate your item.');
-      return;
-    }
-
-    if (imageFiles.length + (formData.imageUrl.trim() ? 1 : 0) > 10) {
-      setError('A maximum of 10 images are allowed, including an image URL.');
-      return;
-    }
-
-    if (imageFiles.some((file) => !isSupportedImage(file))) {
-      setError(`Supported image formats are ${supportedImageFormats}.`);
-      return;
-    }
-
-    if (imageFiles.some((file) => !isImageWithinSizeLimit(file))) {
-      setError('Each image must be 5 MB or smaller.');
+      setError('City and State are required for renters to locate your equipment.');
       return;
     }
 
@@ -158,11 +182,11 @@ const CreateItem = () => {
           state: formData.state.trim(),
           country: formData.country.trim() || 'India',
           postalCode: formData.postalCode.trim() || '',
-        }),
+        })
       );
       payload.append(
         'imageUrls',
-        JSON.stringify(formData.imageUrl.trim() ? [formData.imageUrl.trim()] : []),
+        JSON.stringify(formData.imageUrl.trim() ? [formData.imageUrl.trim()] : [])
       );
       imageFiles.forEach((file) => payload.append('images', file));
 
@@ -172,128 +196,128 @@ const CreateItem = () => {
         setSuccess(true);
         setTimeout(() => {
           navigate('/dashboard');
-        }, 1500);
+        }, 1200);
       } else {
         setError(result.message || 'Failed to list item.');
       }
     } catch (err) {
-      setError(err.message || 'Error occurred while saving listing.');
+      setError(err.message || 'Error occurred while publishing listing.');
     } finally {
       setLoading(false);
     }
   };
 
+  const dailyNum = Number(formData.pricePerDay) || 0;
+  const monthlyEstimate = dailyNum * 8; // approx 8 days rented per month
+
   return (
-    <div className="container" style={{ padding: '36px 20px', maxWidth: 760 }}>
+    <div className="container" style={{ padding: '36px 20px 72px', maxWidth: 1120 }}>
       {/* Top Header */}
-      <div style={{ marginBottom: 24 }}>
+      <div style={{ marginBottom: 28 }}>
         <Link
           to="/dashboard"
           style={{
             color: 'var(--text-secondary)',
-            fontSize: 13,
+            fontSize: '0.85rem',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 4,
-            marginBottom: 6,
+            gap: 6,
+            marginBottom: 8,
           }}
         >
-          <ArrowLeft size={13} />
+          <ArrowLeft size={14} />
           <span>Back to Dashboard</span>
         </Link>
-        <h1 style={{ fontSize: 26, fontWeight: 800, margin: '2px 0' }}>
+        <h1 style={{ fontSize: '1.85rem', fontWeight: 800, margin: '2px 0 6px' }}>
           List an Item for Rent
         </h1>
-        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: 14 }}>
-          Share your tools, cameras, laptops, or gear with nearby verified renters and earn monthly passive income
+        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.92rem' }}>
+          Share your cameras, power tools, electronics, or outdoor gear with verified neighbors and earn consistent passive income
         </p>
       </div>
 
-      <div className="card" style={{ padding: 32 }}>
-        {error && (
-          <div className="alert alert-danger">
-            <AlertCircle size={16} />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {success && (
-          <div className="alert alert-success">
-            <CheckCircle2 size={16} />
-            <span>Item listed successfully! Redirecting to your dashboard...</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          {/* Section 1: Item Details */}
-          <div style={{ marginBottom: 28 }}>
-            <h3 style={{ fontSize: 16, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid var(--border)' }}>
-              1. General Information
-            </h3>
-
-            <div className="form-group">
-              <label className="form-label">Item Title *</label>
-              <input
-                type="text"
-                name="name"
-                required
-                minLength="3"
-                maxLength="120"
-                placeholder="e.g. Sony A7 III Mirrorless Camera (Body Only)"
-                value={formData.name}
-                onChange={handleChange}
-                className="form-input"
-              />
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1.8fr) minmax(300px, 1.1fr)',
+          gap: 32,
+          alignItems: 'start',
+        }}
+      >
+        {/* LEFT COLUMN: Main Multi-Section Form */}
+        <div>
+          {error && (
+            <div className="alert alert-danger" style={{ marginBottom: 20 }}>
+              <AlertCircle size={16} />
+              <span>{error}</span>
             </div>
+          )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <div className="form-group">
-                <label className="form-label">Category *</label>
-                <select
-                  name="categoryId"
-                  required
-                  value={formData.categoryId}
-                  onChange={handleChange}
-                  className="form-select"
-                  disabled={loadingCategories}
-                >
-                  {categories.map((cat) => (
-                    <option key={cat._id} value={cat._id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          {success && (
+            <div className="alert alert-success" style={{ marginBottom: 20 }}>
+              <CheckCircle2 size={16} />
+              <span>Listing created successfully! Redirecting to your dashboard...</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            {/* Card 1: General Details */}
+            <div className="card" style={{ padding: 28, marginBottom: 24 }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0 0 18px', paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+                1. General Equipment Information
+              </h3>
 
               <div className="form-group">
-                <label className="form-label">Brand / Manufacturer</label>
+                <label className="form-label">
+                  Item Title * <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(Clear and specific)</span>
+                </label>
                 <input
                   type="text"
-                  name="brand"
-                  placeholder="e.g. Sony, Apple, Bosch"
-                  value={formData.brand}
+                  name="name"
+                  required
+                  minLength="3"
+                  maxLength="120"
+                  placeholder="e.g. Sony Alpha A7 III Full Frame Camera Body"
+                  value={formData.name}
                   onChange={handleChange}
                   className="form-input"
                 />
               </div>
-            </div>
 
-            <div className="form-group">
-              <label className="form-label">Detailed Description *</label>
-              <textarea
-                name="description"
-                required
-                rows="4"
-                placeholder="Describe what's included in the rental, accessories, working condition, and pickup guidelines..."
-                value={formData.description}
-                onChange={handleChange}
-                className="form-textarea"
-              />
-            </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="form-group">
+                  <label className="form-label">Category *</label>
+                  <select
+                    name="categoryId"
+                    required
+                    value={formData.categoryId}
+                    onChange={handleChange}
+                    className="form-select"
+                    disabled={loadingCategories}
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat._id} value={cat._id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div className="form-group">
+                  <label className="form-label">Brand / Manufacturer</label>
+                  <input
+                    type="text"
+                    name="brand"
+                    placeholder="e.g. Sony, Apple, DeWalt, Canon"
+                    value={formData.brand}
+                    onChange={handleChange}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
               <div className="form-group">
-                <label className="form-label">Item Condition *</label>
+                <label className="form-label">Physical Condition *</label>
                 <select
                   name="condition"
                   required
@@ -301,164 +325,362 @@ const CreateItem = () => {
                   onChange={handleChange}
                   className="form-select"
                 >
-                  <option value="new">Brand New (Unused / In Box)</option>
-                  <option value="like_new">Like New (Barely used, pristine)</option>
-                  <option value="good">Good (Fully functional, normal wear)</option>
-                  <option value="fair">Fair (Usable with cosmetic marks)</option>
+                  <option value="new">Brand New (Unopened / Never Used)</option>
+                  <option value="like_new">Like New (Barely used, zero scratches or cosmetic marks)</option>
+                  <option value="good">Good (Fully functional, normal minor wear)</option>
+                  <option value="fair">Fair (Working properly, visible cosmetic scuffs)</option>
                 </select>
               </div>
 
               <div className="form-group">
-                <label className="form-label">Image URL (Optional)</label>
+                <label className="form-label">Detailed Description *</label>
+                <textarea
+                  name="description"
+                  required
+                  rows="4"
+                  placeholder="Describe what items & cables are included, lens mounts, working state, special handling instructions, and pickup guidelines..."
+                  value={formData.description}
+                  onChange={handleChange}
+                  className="form-textarea"
+                />
+              </div>
+            </div>
+
+            {/* Card 2: Photos & Media */}
+            <div className="card" style={{ padding: 28, marginBottom: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
+                  2. Photos & Media
+                </h3>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  {imagePreviews.length} / 10 photos
+                </span>
+              </div>
+
+              {/* Upload Dropzone */}
+              <div
+                style={{
+                  border: '2px dashed var(--border)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '24px 20px',
+                  textAlign: 'center',
+                  background: 'var(--bg-subtle)',
+                  cursor: 'pointer',
+                  marginBottom: 16,
+                }}
+              >
+                <input
+                  type="file"
+                  id="imageFileInput"
+                  name="images"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageFilesChange}
+                  style={{ display: 'none' }}
+                />
+                <label htmlFor="imageFileInput" style={{ cursor: 'pointer', display: 'block' }}>
+                  <div
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: '50%',
+                      background: 'var(--white)',
+                      boxShadow: 'var(--shadow-sm)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 10px',
+                      color: 'var(--primary)',
+                    }}
+                  >
+                    <Upload size={22} />
+                  </div>
+                  <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)', display: 'block' }}>
+                    Click to browse and upload photos
+                  </strong>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>
+                    PNG, JPG, WEBP, AVIF up to 5 MB per photo (Max 10 photos)
+                  </span>
+                </label>
+              </div>
+
+              {/* Image Previews Grid */}
+              {imagePreviews.length > 0 && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
+                    gap: 12,
+                    marginBottom: 16,
+                  }}
+                >
+                  {imagePreviews.map((src, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        position: 'relative',
+                        aspectRatio: '1',
+                        borderRadius: 'var(--radius-md)',
+                        overflow: 'hidden',
+                        border: '1px solid var(--border)',
+                      }}
+                    >
+                      <img
+                        src={src}
+                        alt={`Preview ${idx + 1}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImageAt(idx)}
+                        style={{
+                          position: 'absolute',
+                          top: 4,
+                          right: 4,
+                          background: 'rgba(0, 0, 0, 0.65)',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: 22,
+                          height: 22,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                        }}
+                        title="Remove photo"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Or Provide an Image URL (Optional)</label>
                 <input
                   type="url"
                   name="imageUrl"
-                  placeholder="https://example.com/gear-photo.jpg"
+                  placeholder="https://images.unsplash.com/photo-example.jpg"
                   value={formData.imageUrl}
                   onChange={handleChange}
                   className="form-input"
                 />
               </div>
-
-              <div className="form-group">
-                <label className="form-label">Upload Images (Optional, up to 10 total)</label>
-                <input
-                  type="file"
-                  name="images"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageFilesChange}
-                  className="form-input"
-                />
-                <small className="text-muted">
-                  {supportedImageFormats}; maximum 5 MB per image.
-                  {imageFiles.length > 0 && ` ${imageFiles.length} file(s) selected.`}
-                </small>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2: Pricing & Deposit */}
-          <div style={{ marginBottom: 28 }}>
-            <h3 style={{ fontSize: 16, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid var(--border)' }}>
-              2. Rental Pricing & Security Deposit
-            </h3>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
-              <div className="form-group">
-                <label className="form-label">Rent Per Day (₹) *</label>
-                <input
-                  type="number"
-                  name="pricePerDay"
-                  required
-                  min="1"
-                  placeholder="e.g. 250"
-                  value={formData.pricePerDay}
-                  onChange={handleChange}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Rent Per Week (₹, Optional)</label>
-                <input
-                  type="number"
-                  name="pricePerWeek"
-                  min="1"
-                  placeholder="e.g. 1400"
-                  value={formData.pricePerWeek}
-                  onChange={handleChange}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Security Deposit (₹) *</label>
-                <input
-                  type="number"
-                  name="securityDeposit"
-                  required
-                  min="0"
-                  placeholder="e.g. 1000"
-                  value={formData.securityDeposit}
-                  onChange={handleChange}
-                  className="form-input"
-                />
-              </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
-              <Info size={14} className="text-red" />
-              <span>Security deposits protect your equipment and are returned to renters after successful return inspection.</span>
+            {/* Card 3: Rental Rates & Security Deposit */}
+            <div className="card" style={{ padding: 28, marginBottom: 24 }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0 0 18px', paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+                3. Rental Pricing & Security Deposit
+              </h3>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                <div className="form-group">
+                  <label className="form-label">Rent Per Day (₹) *</label>
+                  <input
+                    type="number"
+                    name="pricePerDay"
+                    required
+                    min="1"
+                    placeholder="e.g. 500"
+                    value={formData.pricePerDay}
+                    onChange={handleChange}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Weekly Rent (₹, Optional)</label>
+                  <input
+                    type="number"
+                    name="pricePerWeek"
+                    min="1"
+                    placeholder="e.g. 3000"
+                    value={formData.pricePerWeek}
+                    onChange={handleChange}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Security Deposit (₹) *</label>
+                  <input
+                    type="number"
+                    name="securityDeposit"
+                    required
+                    min="0"
+                    placeholder="e.g. 2000"
+                    value={formData.securityDeposit}
+                    onChange={handleChange}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 8,
+                  padding: 12,
+                  background: 'var(--bg-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: '0.82rem',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                <ShieldCheck size={16} className="text-red" style={{ flexShrink: 0, marginTop: 1 }} />
+                <span>
+                  The security deposit protects your equipment against potential damage or delay. It is retained until the gear is returned and verified in person.
+                </span>
+              </div>
             </div>
-          </div>
 
-          {/* Section 3: Location */}
-          <div style={{ marginBottom: 32 }}>
-            <h3 style={{ fontSize: 16, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid var(--border)' }}>
-              3. Pickup Location
-            </h3>
+            {/* Card 4: Pickup Location */}
+            <div className="card" style={{ padding: 28, marginBottom: 28 }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0 0 18px', paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+                4. Handover & Pickup Location
+              </h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
-              <div className="form-group">
-                <label className="form-label">City *</label>
-                <input
-                  type="text"
-                  name="city"
-                  required
-                  placeholder="e.g. Karnal"
-                  value={formData.city}
-                  onChange={handleChange}
-                  className="form-input"
-                />
-              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                <div className="form-group">
+                  <label className="form-label">City *</label>
+                  <input
+                    type="text"
+                    name="city"
+                    required
+                    placeholder="e.g. Karnal, Delhi, Mumbai"
+                    value={formData.city}
+                    onChange={handleChange}
+                    className="form-input"
+                  />
+                </div>
 
-              <div className="form-group">
-                <label className="form-label">State *</label>
-                <input
-                  type="text"
-                  name="state"
-                  required
-                  placeholder="e.g. Haryana"
-                  value={formData.state}
-                  onChange={handleChange}
-                  className="form-input"
-                />
-              </div>
+                <div className="form-group">
+                  <label className="form-label">State *</label>
+                  <input
+                    type="text"
+                    name="state"
+                    required
+                    placeholder="e.g. Haryana"
+                    value={formData.state}
+                    onChange={handleChange}
+                    className="form-input"
+                  />
+                </div>
 
-              <div className="form-group">
-                <label className="form-label">Postal Code</label>
-                <input
-                  type="text"
-                  name="postalCode"
-                  placeholder="e.g. 132001"
-                  value={formData.postalCode}
-                  onChange={handleChange}
-                  className="form-input"
-                />
+                <div className="form-group">
+                  <label className="form-label">Postal Code</label>
+                  <input
+                    type="text"
+                    name="postalCode"
+                    placeholder="e.g. 132001"
+                    value={formData.postalCode}
+                    onChange={handleChange}
+                    className="form-input"
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Form Actions */}
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard')}
-              className="btn btn-secondary"
+            {/* Form Actions */}
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard')}
+                className="btn btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-primary btn-lg"
+              >
+                <PlusCircle size={18} />
+                <span>{loading ? 'Publishing Listing...' : 'Publish Rental Listing'}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* RIGHT COLUMN: Owner Tips & Potential Earnings Calculator */}
+        <div>
+          {/* Earnings Estimator */}
+          <div className="card" style={{ padding: 24, marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <TrendingUp size={20} className="text-red" />
+              <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: 0 }}>
+                Estimated Rental Income
+              </h4>
+            </div>
+
+            <div
+              style={{
+                background: 'var(--bg-subtle)',
+                borderRadius: 'var(--radius-md)',
+                padding: 16,
+                marginBottom: 14,
+                textAlign: 'center',
+              }}
             >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn btn-primary btn-lg"
-            >
-              <PlusCircle size={16} />
-              <span>{loading ? 'Submitting...' : 'Publish Rental Listing'}</span>
-            </button>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', fontWeight: 600 }}>
+                Projected Monthly Return
+              </span>
+              <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--primary)', margin: '4px 0' }}>
+                ₹{monthlyEstimate > 0 ? monthlyEstimate.toLocaleString('en-IN') : '0'}
+              </div>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                Based on an average of 8 rental days per month
+              </span>
+            </div>
+
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+              Gear like cameras, drones, and professional power tools regularly achieve 60-70% utilization during weekends!
+            </p>
           </div>
-        </form>
+
+          {/* Listing Quality Checklist */}
+          <div className="card" style={{ padding: 24, marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <Camera size={20} className="text-red" />
+              <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: 0 }}>
+                Tips for 3x More Bookings
+              </h4>
+            </div>
+
+            <ul style={{ margin: 0, paddingLeft: 18, fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              <li><strong>Take real photos</strong> in bright daylight showing actual wear or accessories.</li>
+              <li><strong>Mention accessories</strong> like batteries, chargers, bags, and cables included.</li>
+              <li><strong>Set competitive rates:</strong> Compare with similar items in your city catalog.</li>
+              <li><strong>Fast responses:</strong> Owners who approve within 1 hour receive 4x repeat bookings.</li>
+            </ul>
+          </div>
+
+          {/* S-RENT Protection Shield */}
+          <div
+            style={{
+              padding: 20,
+              background: 'var(--white)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-lg)',
+              display: 'flex',
+              gap: 12,
+            }}
+          >
+            <ShieldCheck size={28} className="text-success" style={{ flexShrink: 0 }} />
+            <div>
+              <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)', display: 'block' }}>
+                Protected by S-RENT
+              </strong>
+              <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                Every renter must verify their email and phone. You have 100% discretion to accept or reject any booking request.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

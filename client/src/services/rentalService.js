@@ -19,3 +19,8 @@ export const rejectRentalRequest = async (rentalId) => {
   const response = await api.patch(`/api/rentals/${rentalId}/reject`);
   return response.data;
 };
+
+export const getMyRentalRecords = async () => {
+  const response = await api.get('/api/rentals/my-rented-items');
+  return response.data;
+};

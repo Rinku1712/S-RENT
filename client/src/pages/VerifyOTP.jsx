@@ -12,13 +12,8 @@ import {
 } from 'lucide-react';
 
 /**
- * OTP Verification Page
+ * Premium S-RENT OTP Verification Screen
  * URL: /verify-otp
- * Features:
- * - 6-digit OTP confirmation
- * - 5-minute countdown expiry timer
- * - Resend OTP cooldown timer
- * - Zero emojis, 100% Lucide React icons
  */
 const VerifyOTP = () => {
   const [searchParams] = useSearchParams();
@@ -31,7 +26,7 @@ const VerifyOTP = () => {
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
 
-  // 5-minute expiry countdown (300 seconds)
+  // 5-minute countdown (300 seconds)
   const [secondsLeft, setSecondsLeft] = useState(300);
   // Resend cooldown timer (30 seconds)
   const [resendCooldown, setResendCooldown] = useState(30);
@@ -64,7 +59,7 @@ const VerifyOTP = () => {
     }
 
     if (otp.trim().length !== 6) {
-      setError('Please enter a valid 6-digit verification code.');
+      setError('Please enter the 6-digit verification code.');
       return;
     }
 
@@ -74,7 +69,7 @@ const VerifyOTP = () => {
       setSuccessMsg(res.message || 'Email verified successfully! Redirecting to login...');
       setTimeout(() => {
         navigate('/login', { state: { verifiedEmail: email } });
-      }, 1500);
+      }, 1400);
     } catch (err) {
       setError(err.message || 'Verification failed. Please check the code.');
     } finally {
@@ -99,7 +94,7 @@ const VerifyOTP = () => {
       setSecondsLeft(300);
       setResendCooldown(45);
     } catch (err) {
-      setError(err.message || 'Failed to resend OTP. Please try again.');
+      setError(err.message || 'Failed to resend code. Please wait.');
     } finally {
       setResending(false);
     }
@@ -107,84 +102,93 @@ const VerifyOTP = () => {
 
   return (
     <div className="auth-page">
-      <div className="auth-card">
+      <div className="auth-card" style={{ maxWidth: 460 }}>
+        {/* Brand Header */}
         <div className="auth-header">
-          <div className="brand-icon-box" style={{ margin: '0 auto 12px' }}>
-            <MailCheck size={20} />
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: '50%',
+              backgroundColor: 'var(--primary-light)',
+              color: 'var(--primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 14px',
+            }}
+          >
+            <MailCheck size={28} />
           </div>
           <h2>Verify Your Email</h2>
-          <p>We've sent a 6-digit confirmation code to your email</p>
-          {email && (
-            <div style={{ marginTop: 6, fontWeight: 700, color: 'var(--primary)', fontSize: 14 }}>
-              {email}
-            </div>
-          )}
+          <p>We've sent a 6-digit verification code to your email</p>
         </div>
 
         {error && (
-          <div className="alert alert-danger">
-            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+          <div className="alert alert-danger" style={{ marginBottom: 20 }}>
+            <AlertCircle size={16} />
             <span>{error}</span>
           </div>
         )}
 
         {successMsg && (
-          <div className="alert alert-success">
-            <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
+          <div className="alert alert-success" style={{ marginBottom: 20 }}>
+            <CheckCircle2 size={16} />
             <span>{successMsg}</span>
           </div>
         )}
 
         <form onSubmit={handleVerify}>
-          {!initialEmail && (
-            <div className="form-group">
-              <label className="form-label">Registered Email</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your registered email"
-                className="form-input"
-              />
-            </div>
-          )}
-
+          {/* Email (Editable in case user wants to change) */}
           <div className="form-group">
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+            <label className="form-label">Email Address</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="form-input"
+              placeholder="user@example.com"
+            />
+          </div>
+
+          {/* 6-Digit OTP */}
+          <div className="form-group">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <label className="form-label" style={{ margin: 0 }}>
                 6-Digit Security Code
               </label>
-              <span
+              <div
                 style={{
-                  fontSize: 12,
-                  display: 'inline-flex',
+                  display: 'flex',
                   alignItems: 'center',
                   gap: 4,
-                  color: secondsLeft > 0 ? 'var(--text-secondary)' : 'var(--danger)',
+                  fontSize: '0.8rem',
+                  color: secondsLeft < 60 ? 'var(--danger)' : 'var(--text-secondary)',
+                  fontWeight: 600,
                 }}
               >
-                <Clock size={12} />
-                {secondsLeft > 0 ? `Expires: ${formatTimer(secondsLeft)}` : 'Expired'}
-              </span>
+                <Clock size={13} />
+                <span>Expires in {formatTimer(secondsLeft)}</span>
+              </div>
             </div>
 
             <input
               type="text"
               required
               maxLength="6"
-              pattern="\d{6}"
-              placeholder="0 0 0 0 0 0"
+              autoFocus
+              placeholder="1 2 3 4 5 6"
               value={otp}
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
               className="form-input"
               style={{
                 textAlign: 'center',
+                fontSize: '1.6rem',
                 letterSpacing: '0.4em',
-                fontSize: 22,
-                fontWeight: 700,
+                fontWeight: 800,
+                padding: '12px 14px',
               }}
-              autoFocus
             />
           </div>
 
@@ -194,38 +198,44 @@ const VerifyOTP = () => {
             className="btn btn-primary btn-lg"
             style={{ width: '100%', marginTop: 8, justifyContent: 'center' }}
           >
-            <ShieldCheck size={16} />
-            <span>{loading ? 'Verifying...' : 'Verify OTP & Continue'}</span>
+            <CheckCircle2 size={16} />
+            <span>{loading ? 'Verifying Code...' : 'Verify Email & Continue'}</span>
           </button>
         </form>
 
-        <div style={{ marginTop: 24, textAlign: 'center' }}>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-            Didn't receive the email code?
-          </p>
-          <button
-            type="button"
-            onClick={handleResend}
-            disabled={resending || resendCooldown > 0}
-            className="btn btn-secondary btn-sm"
-            style={{ marginTop: 8 }}
-          >
-            <RotateCcw size={13} />
-            <span>
-              {resending
-                ? 'Sending...'
-                : resendCooldown > 0
-                ? `Resend in ${resendCooldown}s`
-                : 'Resend Verification Code'}
+        {/* Resend Cooldown Section */}
+        <div style={{ textAlign: 'center', marginTop: 22 }}>
+          {resendCooldown > 0 ? (
+            <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+              Resend code available in <strong>{resendCooldown}s</strong>
             </span>
-          </button>
+          ) : (
+            <button
+              onClick={handleResend}
+              disabled={resending}
+              type="button"
+              className="btn btn-link"
+              style={{
+                fontSize: '0.85rem',
+                color: 'var(--primary)',
+                fontWeight: 600,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <RotateCcw size={14} />
+              <span>{resending ? 'Sending new code...' : 'Resend Verification Code'}</span>
+            </button>
+          )}
         </div>
 
-        <div className="auth-footer">
-          <p style={{ fontSize: 13 }}>
-            Wrong email address?{' '}
-            <Link to="/signup" className="text-red" style={{ fontWeight: 600 }}>
-              Sign up again
+        {/* Footer Navigation */}
+        <div className="auth-footer" style={{ marginTop: 20 }}>
+          <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0 }}>
+            Already verified?{' '}
+            <Link to="/login" className="text-red" style={{ fontWeight: 700 }}>
+              Back to Sign In
             </Link>
           </p>
         </div>

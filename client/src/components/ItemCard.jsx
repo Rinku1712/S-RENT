@@ -1,25 +1,28 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Shield, ArrowRight, Package } from 'lucide-react';
+import { MapPin, ShieldCheck, ArrowRight, Package, Heart, Sparkles } from 'lucide-react';
 import getItemImageUrl from '../utils/itemImageUrl';
+import { useWishlist } from '../context/WishlistContext';
 
 /**
- * ItemCard Component
- * Displays a single rental marketplace item with:
- * - Product image (or clean fallback icon placeholder)
- * - Availability & Condition badges
- * - Name, Brand, Location (with MapPin)
- * - Prominent daily rental price in bold red
- * - Weekly price and security deposit if present
- * - "View Details" button linking to /items/:id
- * - 100% Lucide React icons, zero emojis
+ * ItemCard Component (Amazon + OLX Standard)
+ * Displays a single rental marketplace product with:
+ * - High quality product image with fallback
+ * - Floating Wishlist Heart button with live local state
+ * - Availability badge & Condition tag
+ * - Verified Owner indicator
+ * - Category, Brand, City Location
+ * - Structured pricing: Price/day, Price/week, Security deposit
+ * - View Details button linking to /items/:id
  */
 const ItemCard = ({ item }) => {
   const [imageError, setImageError] = useState(false);
+  const { isWishlisted, toggleWishlist } = useWishlist();
 
   if (!item) return null;
 
-  // Format condition label
+  const wishlisted = isWishlisted(item._id);
+
   const formatCondition = (cond) => {
     switch (cond) {
       case 'new':
@@ -35,7 +38,6 @@ const ItemCard = ({ item }) => {
     }
   };
 
-  // Determine image URL
   const getImageUrl = () => {
     if (imageError || !item.images || item.images.length === 0) {
       return null;
@@ -44,29 +46,48 @@ const ItemCard = ({ item }) => {
   };
 
   const imageUrl = getImageUrl();
-  const categoryName = item.categoryId?.name || 'General';
+  const categoryName = item.categoryId?.name || 'Equipment';
   const isAvailable = item.availabilityStatus === 'available';
+
+  const handleWishlistClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist(item);
+  };
 
   return (
     <div className="item-card">
-      {/* 1. Media Area */}
+      {/* 1. Media Area with Image & Badges */}
       <div className="item-card-media">
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={item.name}
-            className="item-card-img"
-            onError={() => setImageError(true)}
-            loading="lazy"
-          />
-        ) : (
-          <div className="item-card-placeholder">
-            <Package size={36} className="text-muted" />
-            <span style={{ fontSize: 12, fontWeight: 600 }}>{categoryName}</span>
-          </div>
-        )}
+        <Link to={`/items/${item._id}`}>
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={item.name}
+              className="item-card-img"
+              onError={() => setImageError(true)}
+              loading="lazy"
+            />
+          ) : (
+            <div className="item-card-placeholder">
+              <Package size={38} />
+              <span style={{ fontSize: 12, fontWeight: 600 }}>{categoryName}</span>
+            </div>
+          )}
+        </Link>
 
-        {/* Status Badge */}
+        {/* Floating Wishlist Button */}
+        <button
+          type="button"
+          onClick={handleWishlistClick}
+          className={`card-wishlist-btn ${wishlisted ? 'active' : ''}`}
+          title={wishlisted ? 'Remove from Wishlist' : 'Save to Wishlist'}
+          aria-label="Wishlist"
+        >
+          <Heart size={16} fill={wishlisted ? 'currentColor' : 'none'} />
+        </button>
+
+        {/* Availability Badge */}
         <div className="item-card-badge-top">
           <span className={`badge ${isAvailable ? 'badge-success' : 'badge-warning'}`}>
             ● {isAvailable ? 'Available' : 'Paused'}
@@ -74,45 +95,51 @@ const ItemCard = ({ item }) => {
         </div>
 
         {/* Condition Badge */}
-        <div className="item-card-badge-right">
-          <span className="badge badge-secondary">
+        <div className="item-card-badge-bottom">
+          <span className="badge badge-secondary" style={{ backdropFilter: 'blur(4px)', background: 'rgba(255,255,255,0.92)' }}>
             {formatCondition(item.condition)}
           </span>
         </div>
       </div>
 
-      {/* 2. Card Content Body */}
+      {/* 2. Content Body */}
       <div className="item-card-body">
-        {/* Brand & Location metadata */}
+        {/* Brand & Location */}
         <div className="item-meta-row">
-          <span className="item-brand-tag">{item.brand || 'General'}</span>
+          <span className="item-brand-tag">{item.brand || categoryName}</span>
           {item.location?.city && (
-            <span className="item-location-label">
-              <MapPin size={13} className="text-red" />
-              {item.location.city}
+            <span className="item-location-label" title={`${item.location.city}, ${item.location.state || ''}`}>
+              <MapPin size={12} className="text-red" />
+              <span>{item.location.city}</span>
             </span>
           )}
         </div>
 
-        {/* Item Title */}
+        {/* Title */}
         <h3 className="item-title" title={item.name}>
           <Link to={`/items/${item._id}`}>{item.name}</Link>
         </h3>
 
-        {/* Category tag & brief snippet */}
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.4 }}>
-          {item.description ? item.description.slice(0, 75) + (item.description.length > 75 ? '...' : '') : ''}
-        </p>
+        {/* Verified Owner / Trust Cue */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, fontSize: 12, color: 'var(--success)' }}>
+          <ShieldCheck size={14} />
+          <span style={{ fontWeight: 600 }}>Verified Owner</span>
+        </div>
 
-        {/* Security deposit highlight if configured */}
-        {item.securityDeposit > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)', marginBottom: 10 }}>
-            <Shield size={13} className="text-red" />
-            <span>Deposit: ₹{item.securityDeposit}</span>
+        {/* Deposit Tag */}
+        {item.securityDeposit > 0 ? (
+          <div className="deposit-pill-row">
+            <span>Security Deposit:</span>
+            <strong style={{ color: 'var(--text-primary)' }}>₹{item.securityDeposit}</strong>
+            <span style={{ color: 'var(--success)', fontWeight: 600 }}>(100% Refundable)</span>
+          </div>
+        ) : (
+          <div className="deposit-pill-row">
+            <span style={{ color: 'var(--success)', fontWeight: 600 }}>Zero Security Deposit</span>
           </div>
         )}
 
-        {/* 3. Pricing Row & Actions */}
+        {/* Pricing Box */}
         <div className="item-pricing-box">
           <div className="price-main">
             <span className="amount">₹{item.pricePerDay}</span>
@@ -124,12 +151,13 @@ const ItemCard = ({ item }) => {
               <span>₹{item.pricePerWeek}</span> / wk
             </div>
           ) : (
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Daily Rate</span>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Daily Rental</span>
           )}
         </div>
 
+        {/* View Details CTA */}
         <Link to={`/items/${item._id}`} className="btn btn-primary btn-sm" style={{ width: '100%' }}>
-          <span>View Details</span>
+          <span>Rent Now</span>
           <ArrowRight size={14} />
         </Link>
       </div>

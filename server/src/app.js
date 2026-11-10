@@ -35,6 +35,11 @@ app.use('/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
+// Redirect browser visits to admin frontend routes on port 5173
+app.get(['/admin', '/admin/login', '/admin/dashboard', '/admin/categories'], (req, res) => {
+  res.redirect(`http://localhost:5173${req.originalUrl}`);
+});
+
 app.use((error, req, res, next) => {
   if (error.type === 'entity.parse.failed') {
     return res.status(400).json({

@@ -5,10 +5,13 @@ import {
   getOwnerRentalRequests,
   approveRentalRequest,
   rejectRentalRequest,
+  getMyRentalRecords,
 } from '../services/rentalService';
-import { getAllItems, updateItemImages } from '../services/itemService';
+import { getAllItems, updateItemImages, deleteItem } from '../services/itemService';
 import { getUserProfile } from '../services/authService';
+import getItemImageUrl from '../utils/itemImageUrl';
 import { useAuth } from '../context/AuthContext';
+import { useWishlist } from '../context/WishlistContext';
 import {
   isImageWithinSizeLimit,
   isSupportedImage,
@@ -33,25 +36,29 @@ import {
   Phone,
   ShieldCheck,
   Image,
+  Trash2,
+  Heart,
+  Calendar,
+  MapPin,
+  Tag,
+  Check,
 } from 'lucide-react';
 
 /**
- * User Dashboard Page
- * URL: /user/dashboard (and /dashboard)
- * Business Rule:
- * Every registered user can BOTH rent products and list their own gear for rent.
- * Tabs / Navigation:
- * - 1. Overview: Live metrics from backend
- * - 2. My Listed Items: Products added by user
- * - 3. Rental Requests Received: Booking requests for user's items (Approve / Reject)
- * - 4. My Rentals: Gear user has requested from other owners
- * - 5. Profile: Verified account credentials
- * - Zero emojis, 100% Lucide React icons
+ * Premium S-RENT Unified User & Owner Dashboard
+ * Tabs:
+ * 1. Overview: Live metrics, active alerts, quick actions
+ * 2. My Listings: Equipment inventory manager, upload photos, delete item
+ * 3. Requests Received: Review incoming booking requests (Approve / Reject)
+ * 4. My Rentals: Personal booking history and live status tracking
+ * 5. Saved Wishlist: Saved gear for upcoming projects
+ * 6. Account Profile: Verified credentials, contact details, security status
  */
 const UserDashboard = () => {
   const { user, logout } = useAuth();
+  const { wishlist, removeFromWishlist, wishlistCount } = useWishlist();
 
-  // Active view: 'overview' | 'listings' | 'requests' | 'rentals' | 'profile'
+  // Active view: 'overview' | 'listings' | 'requests' | 'rentals' | 'wishlist' | 'profile'
   const [activeTab, setActiveTab] = useState('overview');
 
   // Backend stats from /api/dashboard/user
@@ -66,15 +73,20 @@ const UserDashboard = () => {
   const [myListings, setMyListings] = useState([]);
   const [listingsLoading, setListingsLoading] = useState(false);
 
+  // My rental bookings (as renter)
+  const [myRentals, setMyRentals] = useState([]);
+  const [rentalsLoading, setRentalsLoading] = useState(false);
+
   // Profile data
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
 
-  // Action status message
+  // Action status messages
   const [actionMessage, setActionMessage] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [actionProcessingId, setActionProcessingId] = useState(null);
   const [imageUploadItemId, setImageUploadItemId] = useState(null);
+  const [deletingItemId, setDeletingItemId] = useState(null);
 
   // Fetch dashboard statistics
   const fetchStats = async () => {
@@ -123,6 +135,21 @@ const UserDashboard = () => {
     }
   };
 
+  // Fetch renter rental records
+  const fetchMyRentals = async () => {
+    try {
+      setRentalsLoading(true);
+      const res = await getMyRentalRecords();
+      if (res.success && res.data) {
+        setMyRentals(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to load personal rentals:', err);
+    } finally {
+      setRentalsLoading(false);
+    }
+  };
+
   // Fetch full user profile
   const fetchProfile = async () => {
     try {
@@ -145,10 +172,15 @@ const UserDashboard = () => {
 
   // Fetch tab-specific data when tab changes
   useEffect(() => {
+    setActionMessage(null);
+    setActionError(null);
+
     if (activeTab === 'requests') {
       fetchOwnerRequests();
     } else if (activeTab === 'listings') {
       fetchMyListings();
+    } else if (activeTab === 'rentals') {
+      fetchMyRentals();
     } else if (activeTab === 'profile') {
       fetchProfile();
     }
@@ -200,13 +232,11 @@ const UserDashboard = () => {
     }
   };
 
+  // Handle Item Image Update
   const handleUpdateImages = async (itemId, files) => {
     if (files.length === 0) return;
 
-    if (
-      files.length > 10 ||
-      files.some((file) => !isSupportedImage(file))
-    ) {
+    if (files.length > 10 || files.some((file) => !isSupportedImage(file))) {
       setActionError(`Choose up to 10 images in these formats: ${supportedImageFormats}.`);
       return;
     }
@@ -216,7 +246,7 @@ const UserDashboard = () => {
       return;
     }
 
-    if (!window.confirm('Replace all current images with the selected images?')) return;
+    if (!window.confirm('Replace current listing photos with the selected images?')) return;
 
     try {
       setImageUploadItemId(itemId);
@@ -225,7 +255,7 @@ const UserDashboard = () => {
       const result = await updateItemImages(itemId, files);
 
       if (result.success) {
-        setActionMessage('Item images updated successfully.');
+        setActionMessage('Listing images updated successfully.');
         await fetchMyListings();
       } else {
         setActionError(result.message || 'Failed to update item images.');
@@ -237,14 +267,44 @@ const UserDashboard = () => {
     }
   };
 
+  // Handle Item Deletion
+  const handleDeleteItem = async (itemId, itemName) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to permanently delete "${itemName}"? This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setDeletingItemId(itemId);
+      setActionMessage(null);
+      setActionError(null);
+
+      const res = await deleteItem(itemId);
+      if (res.success) {
+        setActionMessage(`"${itemName}" deleted successfully.`);
+        await fetchMyListings();
+        fetchStats();
+      } else {
+        setActionError(res.message || 'Failed to delete listing.');
+      }
+    } catch (err) {
+      setActionError(err.message || 'Error occurred while deleting item.');
+    } finally {
+      setDeletingItemId(null);
+    }
+  };
+
   return (
     <div className="dashboard-page container">
-      {/* Top Banner */}
+      {/* Top Welcome Card */}
       <div
         className="card"
         style={{
           padding: '24px 28px',
-          marginBottom: 24,
+          marginBottom: 28,
           borderLeft: '4px solid var(--primary)',
           display: 'flex',
           justifyContent: 'space-between',
@@ -254,21 +314,26 @@ const UserDashboard = () => {
         }}
       >
         <div>
-          <span className="badge badge-primary" style={{ marginBottom: 6 }}>
-            Member Dashboard
-          </span>
-          <h1 style={{ fontSize: 24, fontWeight: 800, margin: '2px 0' }}>
-            Welcome, {user?.name || 'Member'}!
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <span className="badge badge-primary">Member & Owner Dashboard</span>
+            {user?.email && (
+              <span className="badge badge-secondary" style={{ fontSize: '0.75rem' }}>
+                {user.email}
+              </span>
+            )}
+          </div>
+          <h1 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '2px 0 4px' }}>
+            Welcome back, {user?.name || 'Member'}!
           </h1>
-          <p style={{ margin: 0, fontSize: 14 }}>
-            Manage your listed items, incoming rental requests, and outgoing bookings
+          <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+            Manage your peer-to-peer rental gear, incoming requests, and booked equipment
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <Link to="/create-item" className="btn btn-primary btn-sm">
             <PlusCircle size={15} />
-            <span>+ List New Item</span>
+            <span>+ List New Gear</span>
           </Link>
           <Link to="/items" className="btn btn-secondary btn-sm">
             <span>Browse Catalog</span>
@@ -277,97 +342,151 @@ const UserDashboard = () => {
         </div>
       </div>
 
-      {/* Main Dashboard Layout with Sidebar */}
+      {/* Main Dashboard Layout */}
       <div className="dashboard-layout">
-        {/* Left Dashboard Sidebar */}
+        {/* Left Sticky Sidebar */}
         <aside className="dashboard-sidebar">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`dashboard-nav-item ${activeTab === 'overview' ? 'active' : ''}`}
-          >
-            <LayoutDashboard size={16} />
-            <span>Overview</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('listings')}
-            className={`dashboard-nav-item ${activeTab === 'listings' ? 'active' : ''}`}
-          >
-            <Package size={16} />
-            <span>My Listed Items</span>
-            {stats?.totalListedItems ? (
-              <span className="badge badge-secondary" style={{ marginLeft: 'auto' }}>
-                {stats.totalListedItems}
+          {/* User Mini Profile Header */}
+          <div className="dashboard-user-header">
+            <div className="dashboard-user-avatar">
+              {user?.name ? user.name[0].toUpperCase() : 'U'}
+            </div>
+            <div style={{ overflow: 'hidden' }}>
+              <strong
+                style={{
+                  display: 'block',
+                  fontSize: '0.92rem',
+                  color: 'var(--text-primary)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {user?.name || 'Community Member'}
+              </strong>
+              <span
+                style={{
+                  fontSize: '0.76rem',
+                  color: 'var(--text-muted)',
+                  display: 'block',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {user?.email || 'Verified Account'}
               </span>
-            ) : null}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('requests')}
-            className={`dashboard-nav-item ${activeTab === 'requests' ? 'active' : ''}`}
-          >
-            <Inbox size={16} />
-            <span>Requests Received</span>
-            {stats?.pendingRentals > 0 && (
-              <span className="badge badge-danger" style={{ marginLeft: 'auto' }}>
-                {stats.pendingRentals}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('rentals')}
-            className={`dashboard-nav-item ${activeTab === 'rentals' ? 'active' : ''}`}
-          >
-            <ShoppingBag size={16} />
-            <span>My Rentals</span>
-            {stats?.totalMyRentalRequests ? (
-              <span className="badge badge-secondary" style={{ marginLeft: 'auto' }}>
-                {stats.totalMyRentalRequests}
-              </span>
-            ) : null}
-          </button>
-
-          <Link
-            to="/create-item"
-            className="dashboard-nav-item"
-            style={{ color: 'var(--primary)', fontWeight: 600 }}
-          >
-            <PlusCircle size={16} />
-            <span>Add New Item</span>
-          </Link>
-
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`dashboard-nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-          >
-            <User size={16} />
-            <span>Profile</span>
-          </button>
-
-          <div style={{ borderTop: '1px solid var(--border)', marginTop: 12, paddingTop: 12 }}>
-            <button
-              onClick={logout}
-              className="dashboard-nav-item"
-              style={{ color: 'var(--danger)' }}
-            >
-              <LogOut size={16} />
-              <span>Sign Out</span>
-            </button>
+            </div>
           </div>
+
+          {/* Navigation Links */}
+          <nav className="dashboard-nav-list">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`dashboard-nav-btn ${activeTab === 'overview' ? 'active' : ''}`}
+            >
+              <span className="label-with-icon">
+                <LayoutDashboard size={16} />
+                <span>Overview</span>
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('listings')}
+              className={`dashboard-nav-btn ${activeTab === 'listings' ? 'active' : ''}`}
+            >
+              <span className="label-with-icon">
+                <Package size={16} />
+                <span>My Listings</span>
+              </span>
+              {stats?.totalListedItems ? (
+                <span className="badge badge-secondary" style={{ fontSize: '0.75rem' }}>
+                  {stats.totalListedItems}
+                </span>
+              ) : null}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('requests')}
+              className={`dashboard-nav-btn ${activeTab === 'requests' ? 'active' : ''}`}
+            >
+              <span className="label-with-icon">
+                <Inbox size={16} />
+                <span>Requests Received</span>
+              </span>
+              {stats?.pendingRentals > 0 && (
+                <span className="badge badge-danger" style={{ fontSize: '0.75rem' }}>
+                  {stats.pendingRentals}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('rentals')}
+              className={`dashboard-nav-btn ${activeTab === 'rentals' ? 'active' : ''}`}
+            >
+              <span className="label-with-icon">
+                <ShoppingBag size={16} />
+                <span>My Bookings</span>
+              </span>
+              {stats?.totalMyRentalRequests ? (
+                <span className="badge badge-secondary" style={{ fontSize: '0.75rem' }}>
+                  {stats.totalMyRentalRequests}
+                </span>
+              ) : null}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('wishlist')}
+              className={`dashboard-nav-btn ${activeTab === 'wishlist' ? 'active' : ''}`}
+            >
+              <span className="label-with-icon">
+                <Heart size={16} />
+                <span>Saved Wishlist</span>
+              </span>
+              {wishlistCount > 0 && (
+                <span className="badge badge-primary" style={{ fontSize: '0.75rem' }}>
+                  {wishlistCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`dashboard-nav-btn ${activeTab === 'profile' ? 'active' : ''}`}
+            >
+              <span className="label-with-icon">
+                <User size={16} />
+                <span>Account Profile</span>
+              </span>
+            </button>
+
+            <div style={{ borderTop: '1px solid var(--border)', marginTop: 12, paddingTop: 12 }}>
+              <button
+                onClick={logout}
+                className="dashboard-nav-btn"
+                style={{ color: 'var(--danger)' }}
+              >
+                <span className="label-with-icon">
+                  <LogOut size={16} />
+                  <span>Sign Out</span>
+                </span>
+              </button>
+            </div>
+          </nav>
         </aside>
 
-        {/* Right Dashboard Content */}
-        <main className="dashboard-content">
+        {/* Right Dynamic Tab Content */}
+        <main className="dashboard-content" style={{ minWidth: 0 }}>
           {actionMessage && (
-            <div className="alert alert-success">
+            <div className="alert alert-success" style={{ marginBottom: 20 }}>
               <CheckCircle2 size={16} />
               <span>{actionMessage}</span>
             </div>
           )}
 
           {actionError && (
-            <div className="alert alert-danger">
+            <div className="alert alert-danger" style={{ marginBottom: 20 }}>
               <AlertCircle size={16} />
               <span>{actionError}</span>
             </div>
@@ -377,78 +496,87 @@ const UserDashboard = () => {
           {activeTab === 'overview' && (
             <div>
               {statsLoading ? (
-                <div className="spinner"></div>
+                <div style={{ textAlign: 'center', padding: '60px 0' }}>
+                  <div className="spinner"></div>
+                  <p style={{ marginTop: 14, color: 'var(--text-secondary)' }}>
+                    Loading dashboard metrics...
+                  </p>
+                </div>
               ) : stats ? (
                 <div>
-                  {/* Row 1: Listings Stats (As Owner) */}
-                  <h3 style={{ fontSize: 17, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Package size={17} className="text-red" />
-                    <span>My Listed Equipment</span>
-                  </h3>
-
-                  <div className="stats-grid">
-                    <div className="stat-metric-card">
-                      <span className="stat-title">Total Listed Items</span>
-                      <span className="stat-val text-red">{stats.totalListedItems || 0}</span>
-                      <span className="stat-sub">Products in inventory</span>
+                  {/* Metric Cards Grid */}
+                  <div className="metrics-grid">
+                    <div className="metric-card">
+                      <div className="metric-icon-box">
+                        <Package size={22} />
+                      </div>
+                      <div>
+                        <div className="metric-number">{stats.totalListedItems || 0}</div>
+                        <div className="metric-label">Total Listed Items</div>
+                      </div>
                     </div>
 
-                    <div className="stat-metric-card">
-                      <span className="stat-title">Active for Rent</span>
-                      <span className="stat-val text-success">{stats.activeListings || 0}</span>
-                      <span className="stat-sub">Publicly available</span>
+                    <div className="metric-card">
+                      <div
+                        className="metric-icon-box"
+                        style={{ background: 'var(--success-bg)', color: 'var(--success)' }}
+                      >
+                        <CheckCircle2 size={22} />
+                      </div>
+                      <div>
+                        <div className="metric-number" style={{ color: 'var(--success)' }}>
+                          {stats.activeListings || 0}
+                        </div>
+                        <div className="metric-label">Active For Rent</div>
+                      </div>
                     </div>
 
-                    <div className="stat-metric-card">
-                      <span className="stat-title">Requests Received</span>
-                      <span className="stat-val">{stats.totalRentalRequests || 0}</span>
-                      <span className="stat-sub">Lifetime requests</span>
+                    <div className="metric-card">
+                      <div
+                        className="metric-icon-box"
+                        style={{
+                          background: stats.pendingRentals > 0 ? '#FEE2E2' : 'var(--bg-subtle)',
+                          color: stats.pendingRentals > 0 ? 'var(--danger)' : 'var(--text-muted)',
+                        }}
+                      >
+                        <Clock size={22} />
+                      </div>
+                      <div>
+                        <div
+                          className="metric-number"
+                          style={{
+                            color: stats.pendingRentals > 0 ? 'var(--danger)' : 'var(--text-primary)',
+                          }}
+                        >
+                          {stats.pendingRentals || 0}
+                        </div>
+                        <div className="metric-label">Pending Requests</div>
+                      </div>
                     </div>
 
-                    <div className="stat-metric-card">
-                      <span className="stat-title">Pending Approvals</span>
-                      <span className="stat-val" style={{ color: 'var(--warning)' }}>
-                        {stats.pendingRentals || 0}
-                      </span>
-                      <span className="stat-sub">Awaiting your response</span>
+                    <div className="metric-card">
+                      <div
+                        className="metric-icon-box"
+                        style={{ background: '#EDE9FE', color: '#7C3AED' }}
+                      >
+                        <ShoppingBag size={22} />
+                      </div>
+                      <div>
+                        <div className="metric-number">{stats.totalMyRentalRequests || 0}</div>
+                        <div className="metric-label">My Bookings</div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Row 2: Renter Activity Stats */}
-                  <h3 style={{ fontSize: 17, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <ShoppingBag size={17} className="text-red" />
-                    <span>My Rented Gear (As Renter)</span>
-                  </h3>
-
-                  <div className="stats-grid">
-                    <div className="stat-metric-card">
-                      <span className="stat-title">Total Bookings Sent</span>
-                      <span className="stat-val">{stats.totalMyRentalRequests || 0}</span>
-                      <span className="stat-sub">Gear requested</span>
-                    </div>
-
-                    <div className="stat-metric-card">
-                      <span className="stat-title">Approved Bookings</span>
-                      <span className="stat-val text-success">{stats.myApprovedRentals || 0}</span>
-                      <span className="stat-sub">Confirmed by owners</span>
-                    </div>
-
-                    <div className="stat-metric-card">
-                      <span className="stat-title">Pending Confirmation</span>
-                      <span className="stat-val" style={{ color: 'var(--warning)' }}>
-                        {stats.myPendingRentals || 0}
-                      </span>
-                      <span className="stat-sub">Waiting on owners</span>
-                    </div>
-                  </div>
-
-                  {/* Quick Action Alert */}
+                  {/* Urgent Attention Alert Banner */}
                   {stats.pendingRentals > 0 && (
                     <div
                       className="card"
                       style={{
-                        padding: 20,
-                        backgroundColor: 'var(--bg-section)',
+                        padding: '18px 24px',
+                        marginBottom: 24,
+                        backgroundColor: '#FFF1F2',
+                        borderColor: '#FECDD3',
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
@@ -456,29 +584,109 @@ const UserDashboard = () => {
                         gap: 12,
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <Clock size={20} className="text-red" />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <AlertCircle size={22} className="text-red" />
                         <div>
-                          <strong style={{ fontSize: 15, display: 'block' }}>
-                            You have {stats.pendingRentals} pending rental request(s)
+                          <strong style={{ fontSize: '0.95rem', color: '#9F1239' }}>
+                            You have {stats.pendingRentals} pending rental request(s) awaiting your decision!
                           </strong>
-                          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                            Review dates and approve requests from community renters.
+                          <span style={{ display: 'block', fontSize: '0.82rem', color: '#BE123C' }}>
+                            Prompt approval ensures renters can plan equipment pickup smoothly.
                           </span>
                         </div>
                       </div>
 
-                      <button onClick={() => setActiveTab('requests')} className="btn btn-primary btn-sm">
+                      <button
+                        onClick={() => setActiveTab('requests')}
+                        className="btn btn-primary btn-sm"
+                      >
                         <span>Review Requests</span>
                         <ArrowRight size={14} />
                       </button>
                     </div>
                   )}
+
+                  {/* Quick Shortcut Actions */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                      gap: 20,
+                    }}
+                  >
+                    <div className="card" style={{ padding: 24 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                        <div
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 'var(--radius-md)',
+                            backgroundColor: 'var(--primary-light)',
+                            color: 'var(--primary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <PlusCircle size={20} />
+                        </div>
+                        <div>
+                          <h3 style={{ fontSize: '1.05rem', margin: 0, fontWeight: 700 }}>
+                            List More Equipment
+                          </h3>
+                          <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                            Earn passive rental revenue
+                          </span>
+                        </div>
+                      </div>
+                      <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 16px' }}>
+                        Have cameras, power tools, camping gear, or tech sitting idle? List them in under 2 minutes and start earning securely.
+                      </p>
+                      <Link to="/create-item" className="btn btn-primary btn-sm">
+                        <span>Create Listing</span>
+                        <ArrowRight size={13} />
+                      </Link>
+                    </div>
+
+                    <div className="card" style={{ padding: 24 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                        <div
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 'var(--radius-md)',
+                            backgroundColor: '#E0F2FE',
+                            color: '#0284C7',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <ShoppingBag size={20} />
+                        </div>
+                        <div>
+                          <h3 style={{ fontSize: '1.05rem', margin: 0, fontWeight: 700 }}>
+                            Explore Rental Gear
+                          </h3>
+                          <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                            Thousands of verified items
+                          </span>
+                        </div>
+                      </div>
+                      <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 16px' }}>
+                        Why buy when you can rent for a fraction of the price? Discover cameras, drones, tools, and electronics nearby.
+                      </p>
+                      <Link to="/items" className="btn btn-secondary btn-sm">
+                        <span>Browse Catalog</span>
+                        <ArrowRight size={13} />
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="alert alert-warning">
                   <AlertCircle size={16} />
-                  <span>Unable to load dashboard statistics.</span>
+                  <span>Unable to fetch dashboard statistics at this time.</span>
                 </div>
               )}
             </div>
@@ -487,112 +695,207 @@ const UserDashboard = () => {
           {/* TAB 2: MY LISTED ITEMS */}
           {activeTab === 'listings' && (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 20,
+                  flexWrap: 'wrap',
+                  gap: 12,
+                }}
+              >
                 <div>
-                  <h2 style={{ fontSize: 20, fontWeight: 700 }}>My Listed Items</h2>
-                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-                    Manage equipment you have published for rent
+                  <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 4px' }}>
+                    My Listed Equipment
+                  </h2>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                    Manage products you have published for rent across the community
                   </p>
                 </div>
-                <Link to="/create-item" className="btn btn-primary btn-sm">
-                  <PlusCircle size={15} />
-                  <span>Add New Item</span>
-                </Link>
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={fetchMyListings} className="btn btn-secondary btn-sm" title="Refresh">
+                    <RefreshCw size={14} />
+                    <span>Refresh</span>
+                  </button>
+                  <Link to="/create-item" className="btn btn-primary btn-sm">
+                    <PlusCircle size={15} />
+                    <span>Add New Listing</span>
+                  </Link>
+                </div>
               </div>
 
               {listingsLoading ? (
-                <div className="spinner"></div>
+                <div style={{ textAlign: 'center', padding: '60px 0' }}>
+                  <div className="spinner"></div>
+                  <p style={{ marginTop: 14, color: 'var(--text-secondary)' }}>
+                    Loading your listings...
+                  </p>
+                </div>
               ) : myListings.length === 0 ? (
                 <div className="card empty-state-box">
                   <div className="empty-icon-circle">
-                    <Package size={30} />
+                    <Package size={32} />
                   </div>
                   <h3>No items listed yet</h3>
-                  <p>You haven't listed any equipment yet. Start earning passive income by sharing gear you don't use every day!</p>
+                  <p>
+                    You haven't listed any equipment yet. Start earning monthly passive revenue by renting items you already own!
+                  </p>
                   <Link to="/create-item" className="btn btn-primary">
-                    List Your First Item
+                    <PlusCircle size={16} />
+                    <span>List Your First Item</span>
                   </Link>
                 </div>
               ) : (
-                <div className="data-table-card">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Item</th>
-                        <th>Category</th>
-                        <th>Location</th>
-                        <th>Daily Price</th>
-                        <th>Status</th>
-                        <th style={{ textAlign: 'right' }}>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {myListings.map((item) => (
-                        <tr key={item._id}>
-                          <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              <strong style={{ fontSize: 14 }}>{item.name}</strong>
-                              {item.brand && (
-                                <span className="badge badge-secondary" style={{ fontSize: 11 }}>
-                                  {item.brand}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td style={{ color: 'var(--text-secondary)' }}>
-                            {item.categoryId?.name || 'General'}
-                          </td>
-                          <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
-                            {item.location?.city || 'India'}
-                          </td>
-                          <td>
-                            <strong className="text-red">₹{item.pricePerDay}</strong>
-                            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>/day</span>
-                          </td>
-                          <td>
-                            <span
-                              className={`badge ${
-                                item.availabilityStatus === 'available'
-                                  ? 'badge-success'
-                                  : 'badge-warning'
-                              }`}
-                            >
-                              ● {item.availabilityStatus}
-                            </span>
-                          </td>
-                          <td style={{ textAlign: 'right' }}>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                              <label className="btn btn-secondary btn-sm">
-                                <Image size={13} />
-                                <span>
-                                  {imageUploadItemId === item._id ? 'Uploading...' : 'Update Images'}
-                                </span>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  multiple
-                                  disabled={imageUploadItemId === item._id}
-                                  onChange={(e) => {
-                                    const files = Array.from(e.target.files || []);
-                                    e.target.value = '';
-                                    handleUpdateImages(item._id, files);
-                                  }}
-                                  style={{ display: 'none' }}
-                                />
-                              </label>
-                              <Link
-                                to={`/items/${item._id}`}
-                                className="btn btn-secondary btn-sm"
-                              >
-                                <ExternalLink size={13} />
-                                <span>View Listing</span>
-                              </Link>
-                            </div>
-                          </td>
+                <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                  <div className="table-responsive">
+                    <table className="dashboard-table">
+                      <thead>
+                        <tr>
+                          <th>Item</th>
+                          <th>Category</th>
+                          <th>Location</th>
+                          <th>Rate / Deposit</th>
+                          <th>Status</th>
+                          <th style={{ textAlign: 'right' }}>Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {myListings.map((item) => {
+                          const firstImage =
+                            item.images && item.images.length > 0 ? item.images[0] : null;
+                          const thumbUrl = getItemImageUrl(firstImage);
+
+                          return (
+                            <tr key={item._id}>
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                  <div
+                                    style={{
+                                      width: 48,
+                                      height: 48,
+                                      borderRadius: 'var(--radius-md)',
+                                      overflow: 'hidden',
+                                      backgroundColor: 'var(--bg-subtle)',
+                                      flexShrink: 0,
+                                      border: '1px solid var(--border)',
+                                    }}
+                                  >
+                                    {thumbUrl ? (
+                                      <img
+                                        src={thumbUrl}
+                                        alt={item.name}
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                      />
+                                    ) : (
+                                      <div
+                                        style={{
+                                          width: '100%',
+                                          height: '100%',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          color: 'var(--text-muted)',
+                                        }}
+                                      >
+                                        <Package size={20} />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)', display: 'block' }}>
+                                      {item.name}
+                                    </strong>
+                                    {item.brand && (
+                                      <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                                        {item.brand}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                {item.categoryId?.name || 'General'}
+                              </td>
+
+                              <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                {item.location?.city || 'India'}
+                              </td>
+
+                              <td>
+                                <strong className="text-red">₹{item.pricePerDay}</strong>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>/day</span>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                  Deposit: ₹{item.securityDeposit || 0}
+                                </div>
+                              </td>
+
+                              <td>
+                                <span
+                                  className={`badge ${
+                                    item.availabilityStatus === 'available'
+                                      ? 'badge-success'
+                                      : 'badge-warning'
+                                  }`}
+                                  style={{ textTransform: 'capitalize' }}
+                                >
+                                  ● {item.availabilityStatus}
+                                </span>
+                              </td>
+
+                              <td style={{ textAlign: 'right' }}>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                                  <label
+                                    className="btn btn-secondary btn-sm"
+                                    title="Update item photos"
+                                    style={{ cursor: 'pointer' }}
+                                  >
+                                    <Image size={13} />
+                                    <span>
+                                      {imageUploadItemId === item._id ? 'Uploading...' : 'Photos'}
+                                    </span>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      multiple
+                                      disabled={imageUploadItemId === item._id}
+                                      onChange={(e) => {
+                                        const files = Array.from(e.target.files || []);
+                                        e.target.value = '';
+                                        handleUpdateImages(item._id, files);
+                                      }}
+                                      style={{ display: 'none' }}
+                                    />
+                                  </label>
+
+                                  <Link
+                                    to={`/items/${item._id}`}
+                                    className="btn btn-secondary btn-sm"
+                                    title="View live listing"
+                                  >
+                                    <ExternalLink size={13} />
+                                    <span>View</span>
+                                  </Link>
+
+                                  <button
+                                    onClick={() => handleDeleteItem(item._id, item.name)}
+                                    disabled={deletingItemId === item._id}
+                                    className="btn btn-danger btn-sm"
+                                    title="Delete this listing"
+                                  >
+                                    <Trash2 size={13} />
+                                    <span>{deletingItemId === item._id ? '...' : 'Delete'}</span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>
@@ -601,13 +904,25 @@ const UserDashboard = () => {
           {/* TAB 3: RENTAL REQUESTS RECEIVED (AS OWNER) */}
           {activeTab === 'requests' && (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 20,
+                  flexWrap: 'wrap',
+                  gap: 12,
+                }}
+              >
                 <div>
-                  <h2 style={{ fontSize: 20, fontWeight: 700 }}>Rental Requests for Your Gear</h2>
-                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-                    Confirm or reject incoming booking requests from community members
+                  <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 4px' }}>
+                    Rental Requests Received
+                  </h2>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                    Approve or decline booking requests from renters for your gear
                   </p>
                 </div>
+
                 <button onClick={fetchOwnerRequests} className="btn btn-secondary btn-sm">
                   <RefreshCw size={14} />
                   <span>Refresh</span>
@@ -615,22 +930,30 @@ const UserDashboard = () => {
               </div>
 
               {requestsLoading ? (
-                <div className="spinner"></div>
+                <div style={{ textAlign: 'center', padding: '60px 0' }}>
+                  <div className="spinner"></div>
+                  <p style={{ marginTop: 14, color: 'var(--text-secondary)' }}>
+                    Loading rental requests...
+                  </p>
+                </div>
               ) : ownerRequests.length === 0 ? (
                 <div className="card empty-state-box">
                   <div className="empty-icon-circle">
-                    <Inbox size={30} />
+                    <Inbox size={32} />
                   </div>
-                  <h3>No incoming rental requests</h3>
-                  <p>When someone requests to rent any of your listed items, their contact and booking details will appear here.</p>
+                  <h3>No rental requests received yet</h3>
+                  <p>
+                    When renters book your items, their contact information and rental dates will appear here for your confirmation.
+                  </p>
                   <Link to="/create-item" className="btn btn-primary">
-                    List More Items
+                    <PlusCircle size={16} />
+                    <span>List More Gear</span>
                   </Link>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {ownerRequests.map((req) => (
-                    <div key={req._id} className="card" style={{ padding: 20 }}>
+                    <div key={req._id} className="card" style={{ padding: 22 }}>
                       <div
                         style={{
                           display: 'flex',
@@ -645,12 +968,12 @@ const UserDashboard = () => {
                       >
                         <div>
                           <span className="badge badge-primary" style={{ marginBottom: 4 }}>
-                            Booking #{req._id.slice(-6)}
+                            Booking Request #{req._id.slice(-6)}
                           </span>
-                          <h3 style={{ fontSize: 18, margin: '2px 0' }}>
+                          <h3 style={{ fontSize: '1.15rem', margin: '4px 0 2px', fontWeight: 800 }}>
                             {req.itemId?.name || 'Rental Item'}
                           </h3>
-                          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                             {req.itemId?.brand} • {req.itemId?.location?.city || 'Location unspecified'}
                           </span>
                         </div>
@@ -671,54 +994,55 @@ const UserDashboard = () => {
                         </div>
                       </div>
 
-                      {/* Details row */}
+                      {/* Request Details 3-Column Info */}
                       <div
                         style={{
                           display: 'grid',
                           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                           gap: 16,
                           marginBottom: 16,
-                          fontSize: 13,
+                          fontSize: '0.88rem',
                         }}
                       >
                         <div>
-                          <span className="text-muted" style={{ display: 'block', fontSize: 12 }}>
-                            Renter Contact
+                          <span className="text-muted" style={{ display: 'block', fontSize: '0.78rem', textTransform: 'uppercase', fontWeight: 600 }}>
+                            Renter Information
                           </span>
-                          <strong style={{ fontSize: 14, color: 'var(--text-primary)' }}>
+                          <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>
                             {req.renterId?.name || 'Community Member'}
                           </strong>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, color: 'var(--text-secondary)' }}>
-                            <Mail size={12} />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+                            <Mail size={13} />
                             <span>{req.renterId?.email || 'N/A'}</span>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, color: 'var(--text-secondary)' }}>
-                            <Phone size={12} />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+                            <Phone size={13} />
                             <span>{req.renterId?.phone || 'N/A'}</span>
                           </div>
                         </div>
 
                         <div>
-                          <span className="text-muted" style={{ display: 'block', fontSize: 12 }}>
+                          <span className="text-muted" style={{ display: 'block', fontSize: '0.78rem', textTransform: 'uppercase', fontWeight: 600 }}>
                             Rental Duration
                           </span>
                           <strong style={{ color: 'var(--text-primary)' }}>
-                            {new Date(req.startDate).toLocaleDateString()} &rarr; {new Date(req.endDate).toLocaleDateString()}
+                            {new Date(req.startDate).toLocaleDateString()} &rarr;{' '}
+                            {new Date(req.endDate).toLocaleDateString()}
                           </strong>
-                          <div style={{ color: 'var(--text-secondary)', marginTop: 2 }}>
-                            Duration: {req.totalDays} day(s)
+                          <div style={{ color: 'var(--text-secondary)', marginTop: 4, fontSize: '0.82rem' }}>
+                            Total Period: {req.totalDays} day(s)
                           </div>
                         </div>
 
                         <div>
-                          <span className="text-muted" style={{ display: 'block', fontSize: 12 }}>
-                            Financials
+                          <span className="text-muted" style={{ display: 'block', fontSize: '0.78rem', textTransform: 'uppercase', fontWeight: 600 }}>
+                            Financial Breakdown
                           </span>
-                          <strong className="text-red" style={{ fontSize: 16 }}>
+                          <strong className="text-red" style={{ fontSize: '1.15rem' }}>
                             Rent: ₹{req.totalAmount}
                           </strong>
-                          <div style={{ color: 'var(--text-secondary)', marginTop: 2 }}>
-                            Deposit: ₹{req.securityDeposit}
+                          <div style={{ color: 'var(--text-secondary)', marginTop: 2, fontSize: '0.82rem' }}>
+                            Refundable Deposit: ₹{req.securityDeposit}
                           </div>
                         </div>
                       </div>
@@ -740,7 +1064,7 @@ const UserDashboard = () => {
                             className="btn btn-danger btn-sm"
                           >
                             <XCircle size={14} />
-                            <span>{actionProcessingId === req._id ? 'Updating...' : 'Reject Request'}</span>
+                            <span>{actionProcessingId === req._id ? 'Rejecting...' : 'Decline Request'}</span>
                           </button>
                           <button
                             onClick={() => handleApprove(req._id)}
@@ -748,7 +1072,7 @@ const UserDashboard = () => {
                             className="btn btn-primary btn-sm"
                           >
                             <CheckCircle2 size={14} />
-                            <span>{actionProcessingId === req._id ? 'Updating...' : 'Approve Request'}</span>
+                            <span>{actionProcessingId === req._id ? 'Approving...' : 'Approve Request'}</span>
                           </button>
                         </div>
                       ) : (
@@ -757,11 +1081,11 @@ const UserDashboard = () => {
                             paddingTop: 10,
                             borderTop: '1px solid var(--border-light)',
                             textAlign: 'right',
-                            fontSize: 13,
+                            fontSize: '0.85rem',
                             color: 'var(--text-secondary)',
                           }}
                         >
-                          Request has been marked as <strong style={{ textTransform: 'capitalize' }}>{req.status}</strong>
+                          Booking marked as <strong style={{ textTransform: 'capitalize' }}>{req.status}</strong>
                         </div>
                       )}
                     </div>
@@ -774,99 +1098,368 @@ const UserDashboard = () => {
           {/* TAB 4: MY RENTALS (AS RENTER) */}
           {activeTab === 'rentals' && (
             <div>
-              <div style={{ marginBottom: 16 }}>
-                <h2 style={{ fontSize: 20, fontWeight: 700 }}>My Rented Gear & Bookings</h2>
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-                  Equipment you have requested from other community owners
-                </p>
-              </div>
-
               <div
-                className="card"
                 style={{
-                  padding: 20,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                   marginBottom: 20,
-                  backgroundColor: 'var(--bg-section)',
+                  flexWrap: 'wrap',
+                  gap: 12,
                 }}
               >
-                <h4 style={{ fontSize: 14, marginBottom: 12 }}>Booking Summary</h4>
-                <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-                  <div>
-                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Total Requests Sent</span>
-                    <div style={{ fontSize: 24, fontWeight: 800 }}>{stats?.totalMyRentalRequests || 0}</div>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Approved by Owners</span>
-                    <div style={{ fontSize: 24, fontWeight: 800 }} className="text-success">
-                      {stats?.myApprovedRentals || 0}
-                    </div>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Pending Requests</span>
-                    <div style={{ fontSize: 24, fontWeight: 800 }} style={{ color: 'var(--warning)' }}>
-                      {stats?.myPendingRentals || 0}
-                    </div>
-                  </div>
+                <div>
+                  <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 4px' }}>
+                    My Bookings & Rentals
+                  </h2>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                    Track gear you have requested to rent from other community owners
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={fetchMyRentals} className="btn btn-secondary btn-sm">
+                    <RefreshCw size={14} />
+                    <span>Refresh</span>
+                  </button>
+                  <Link to="/items" className="btn btn-primary btn-sm">
+                    <span>Browse Catalog</span>
+                    <ArrowRight size={14} />
+                  </Link>
                 </div>
               </div>
 
-              <div className="card empty-state-box">
-                <div className="empty-icon-circle">
-                  <ShoppingBag size={28} />
+              {rentalsLoading ? (
+                <div style={{ textAlign: 'center', padding: '60px 0' }}>
+                  <div className="spinner"></div>
+                  <p style={{ marginTop: 14, color: 'var(--text-secondary)' }}>
+                    Loading your rental bookings...
+                  </p>
                 </div>
-                <h3>Explore & Rent More Gear</h3>
-                <p>Need power tools, cameras, laptops, or camping equipment? Rent instead of buying!</p>
-                <Link to="/items" className="btn btn-primary">
-                  Browse Available Items
-                </Link>
-              </div>
+              ) : myRentals.length === 0 ? (
+                <div className="card empty-state-box">
+                  <div className="empty-icon-circle">
+                    <ShoppingBag size={32} />
+                  </div>
+                  <h3>No bookings yet</h3>
+                  <p>
+                    You haven't rented any equipment yet. Explore cameras, power tools, electronics, and camping gear available nearby!
+                  </p>
+                  <Link to="/items" className="btn btn-primary">
+                    <ShoppingBag size={16} />
+                    <span>Browse Available Items</span>
+                  </Link>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {myRentals.map((rental) => (
+                    <div key={rental._id} className="card" style={{ padding: 22 }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          paddingBottom: 14,
+                          borderBottom: '1px solid var(--border)',
+                          marginBottom: 14,
+                          flexWrap: 'wrap',
+                          gap: 10,
+                        }}
+                      >
+                        <div>
+                          <span className="badge badge-primary" style={{ marginBottom: 4 }}>
+                            Booking #{rental._id.slice(-6)}
+                          </span>
+                          <h3 style={{ fontSize: '1.15rem', margin: '4px 0 2px', fontWeight: 800 }}>
+                            {rental.itemId?.name || 'Rented Equipment'}
+                          </h3>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                            {rental.itemId?.location?.city || 'Location unspecified'}
+                          </span>
+                        </div>
+
+                        <div>
+                          <span
+                            className={`badge ${
+                              rental.status === 'approved'
+                                ? 'badge-success'
+                                : rental.status === 'rejected'
+                                ? 'badge-danger'
+                                : 'badge-warning'
+                            }`}
+                            style={{ textTransform: 'capitalize' }}
+                          >
+                            ● {rental.status}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                          gap: 16,
+                          fontSize: '0.88rem',
+                        }}
+                      >
+                        <div>
+                          <span className="text-muted" style={{ display: 'block', fontSize: '0.78rem', textTransform: 'uppercase', fontWeight: 600 }}>
+                            Rental Dates
+                          </span>
+                          <strong style={{ color: 'var(--text-primary)' }}>
+                            {new Date(rental.startDate).toLocaleDateString()} &rarr;{' '}
+                            {new Date(rental.endDate).toLocaleDateString()}
+                          </strong>
+                          <div style={{ color: 'var(--text-secondary)', marginTop: 2, fontSize: '0.82rem' }}>
+                            Period: {rental.totalDays} day(s)
+                          </div>
+                        </div>
+
+                        <div>
+                          <span className="text-muted" style={{ display: 'block', fontSize: '0.78rem', textTransform: 'uppercase', fontWeight: 600 }}>
+                            Payment Breakdown
+                          </span>
+                          <strong className="text-red" style={{ fontSize: '1.15rem' }}>
+                            Rent: ₹{rental.totalAmount}
+                          </strong>
+                          <div style={{ color: 'var(--text-secondary)', marginTop: 2, fontSize: '0.82rem' }}>
+                            Deposit: ₹{rental.securityDeposit} (Refundable)
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                          {rental.itemId?._id && (
+                            <Link
+                              to={`/items/${rental.itemId._id}`}
+                              className="btn btn-secondary btn-sm"
+                            >
+                              <ExternalLink size={14} />
+                              <span>View Listing Details</span>
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
-          {/* TAB 5: PROFILE */}
+          {/* TAB 5: WISHLIST */}
+          {activeTab === 'wishlist' && (
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 20,
+                  flexWrap: 'wrap',
+                  gap: 12,
+                }}
+              >
+                <div>
+                  <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 4px' }}>
+                    Saved Wishlist ({wishlistCount})
+                  </h2>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                    Gear you have bookmarked for upcoming photo shoots, projects, or trips
+                  </p>
+                </div>
+
+                <Link to="/items" className="btn btn-secondary btn-sm">
+                  <span>Browse Catalog</span>
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
+
+              {wishlist.length === 0 ? (
+                <div className="card empty-state-box">
+                  <div className="empty-icon-circle">
+                    <Heart size={32} />
+                  </div>
+                  <h3>Your wishlist is empty</h3>
+                  <p>
+                    Click the heart icon on any product card or details page to bookmark equipment you want to rent later.
+                  </p>
+                  <Link to="/items" className="btn btn-primary">
+                    <ShoppingBag size={16} />
+                    <span>Explore Rental Catalog</span>
+                  </Link>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                    gap: 18,
+                  }}
+                >
+                  {wishlist.map((item) => {
+                    const firstImg = item.images && item.images.length > 0 ? item.images[0] : null;
+                    const thumbUrl = getItemImageUrl(firstImg);
+
+                    return (
+                      <div key={item._id} className="card" style={{ padding: 16 }}>
+                        <div
+                          style={{
+                            width: '100%',
+                            aspectRatio: '4 / 3',
+                            borderRadius: 'var(--radius-md)',
+                            overflow: 'hidden',
+                            backgroundColor: 'var(--bg-subtle)',
+                            marginBottom: 12,
+                            position: 'relative',
+                          }}
+                        >
+                          {thumbUrl ? (
+                            <img
+                              src={thumbUrl}
+                              alt={item.name}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'var(--text-muted)',
+                              }}
+                            >
+                              <Package size={36} />
+                            </div>
+                          )}
+                          <button
+                            onClick={() => removeFromWishlist(item._id)}
+                            style={{
+                              position: 'absolute',
+                              top: 8,
+                              right: 8,
+                              background: 'rgba(255, 255, 255, 0.9)',
+                              border: 'none',
+                              borderRadius: '50%',
+                              width: 32,
+                              height: 32,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              color: 'var(--danger)',
+                            }}
+                            title="Remove from wishlist"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+
+                        <strong
+                          style={{
+                            fontSize: '0.95rem',
+                            display: 'block',
+                            color: 'var(--text-primary)',
+                            marginBottom: 4,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {item.name}
+                        </strong>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: 10 }}>
+                          <MapPin size={12} className="text-red" />
+                          <span>{item.location?.city || 'India'}</span>
+                          <span>•</span>
+                          <span>{item.categoryId?.name || 'Equipment'}</span>
+                        </div>
+
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            paddingTop: 10,
+                            borderTop: '1px solid var(--border)',
+                          }}
+                        >
+                          <div>
+                            <strong className="text-red" style={{ fontSize: '1.1rem' }}>
+                              ₹{item.pricePerDay}
+                            </strong>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>/day</span>
+                          </div>
+
+                          <Link to={`/items/${item._id}`} className="btn btn-primary btn-sm">
+                            <span>Rent Now</span>
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 6: PROFILE */}
           {activeTab === 'profile' && (
-            <div style={{ maxWidth: 640 }}>
-              <div style={{ marginBottom: 16 }}>
-                <h2 style={{ fontSize: 20, fontWeight: 700 }}>My Account Profile</h2>
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-                  Verified identity details and credentials
+            <div style={{ maxWidth: 680 }}>
+              <div style={{ marginBottom: 20 }}>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 4px' }}>
+                  Account Profile & Trust
+                </h2>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  Verified identity details, contact info, and rental security standing
                 </p>
               </div>
 
               {profileLoading ? (
-                <div className="spinner"></div>
+                <div style={{ textAlign: 'center', padding: '60px 0' }}>
+                  <div className="spinner"></div>
+                  <p style={{ marginTop: 14, color: 'var(--text-secondary)' }}>
+                    Loading profile details...
+                  </p>
+                </div>
               ) : profile ? (
-                <div className="card" style={{ padding: 24 }}>
+                <div className="card" style={{ padding: 28 }}>
+                  {/* User Profile Header */}
                   <div
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 16,
+                      gap: 18,
                       borderBottom: '1px solid var(--border)',
-                      paddingBottom: 20,
-                      marginBottom: 20,
+                      paddingBottom: 22,
+                      marginBottom: 22,
                     }}
                   >
                     <div
                       style={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: '50%',
+                        width: 60,
+                        height: 60,
+                        borderRadius: 'var(--radius-full)',
                         backgroundColor: 'var(--primary-light)',
                         color: 'var(--primary)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: 22,
-                        fontWeight: 700,
+                        fontSize: '1.5rem',
+                        fontWeight: 800,
+                        flexShrink: 0,
                       }}
                     >
                       {profile.name ? profile.name[0].toUpperCase() : 'U'}
                     </div>
 
                     <div>
-                      <h3 style={{ fontSize: 18, margin: '0 0 4px' }}>{profile.name}</h3>
-                      <div style={{ display: 'flex', gap: 6 }}>
+                      <h3 style={{ fontSize: '1.25rem', margin: '0 0 6px', fontWeight: 800 }}>
+                        {profile.name}
+                      </h3>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         <span
                           className={`badge ${
                             profile.isEmailVerified ? 'badge-success' : 'badge-warning'
@@ -876,36 +1469,86 @@ const UserDashboard = () => {
                           {profile.isEmailVerified ? 'Email Verified' : 'Unverified Email'}
                         </span>
                         <span className="badge badge-secondary">
-                          Status: {profile.accountStatus}
+                          Account: {profile.accountStatus || 'active'}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14, fontSize: 14 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: 10 }}>
-                      <span className="text-muted">Email:</span>
-                      <strong>{profile.email}</strong>
+                  {/* Profile Credentials List */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16, fontSize: '0.9rem' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        borderBottom: '1px solid var(--border-light)',
+                        paddingBottom: 12,
+                      }}
+                    >
+                      <span className="text-muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Mail size={15} />
+                        <span>Email Address</span>
+                      </span>
+                      <strong style={{ color: 'var(--text-primary)' }}>{profile.email}</strong>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: 10 }}>
-                      <span className="text-muted">Phone:</span>
-                      <strong>{profile.phone}</strong>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        borderBottom: '1px solid var(--border-light)',
+                        paddingBottom: 12,
+                      }}
+                    >
+                      <span className="text-muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Phone size={15} />
+                        <span>Phone Number</span>
+                      </span>
+                      <strong style={{ color: 'var(--text-primary)' }}>{profile.phone || 'Not provided'}</strong>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: 10 }}>
-                      <span className="text-muted">Location:</span>
-                      <strong>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        borderBottom: '1px solid var(--border-light)',
+                        paddingBottom: 12,
+                      }}
+                    >
+                      <span className="text-muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <MapPin size={15} />
+                        <span>Registered Location</span>
+                      </span>
+                      <strong style={{ color: 'var(--text-primary)' }}>
                         {profile.address?.city
-                          ? `${profile.address.city}, ${profile.address.state || ''}`
+                          ? `${profile.address.city}, ${profile.address.state || 'India'}`
                           : 'India'}
                       </strong>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span className="text-muted">Member Since:</span>
-                      <strong>{new Date(profile.createdAt).toLocaleDateString()}</strong>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        borderBottom: '1px solid var(--border-light)',
+                        paddingBottom: 12,
+                      }}
+                    >
+                      <span className="text-muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Calendar size={15} />
+                        <span>Member Since</span>
+                      </span>
+                      <strong style={{ color: 'var(--text-primary)' }}>
+                        {new Date(profile.createdAt).toLocaleDateString()}
+                      </strong>
                     </div>
+                  </div>
+
+                  <div style={{ marginTop: 28, paddingTop: 18, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button onClick={logout} className="btn btn-danger btn-sm">
+                      <LogOut size={14} />
+                      <span>Sign Out from S-RENT</span>
+                    </button>
                   </div>
                 </div>
               ) : (

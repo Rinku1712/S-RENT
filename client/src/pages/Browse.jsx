@@ -5,7 +5,6 @@ import { getCategories } from '../services/categoryService';
 import ItemCard from '../components/ItemCard';
 import {
   Search,
-  Filter,
   SlidersHorizontal,
   RotateCcw,
   Package,
@@ -13,17 +12,21 @@ import {
   Tag,
   ArrowUpDown,
   X,
+  Check,
+  ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 
 /**
- * Explore Items / Product Listing Page
- * URL: /items (and /browse)
+ * Explore / Browse Items Page (OLX Discovery Standard)
  * Features:
- * - Commercial rental marketplace layout with left sidebar filters and product grid
- * - Keyword search, Category filter, Brand, City, State, Condition, Price range
- * - Instant sorting (Recently Added, Price: Low to High, Price: High to Low)
+ * - Commercial marketplace layout: Left sticky filter sidebar + Right item grid
+ * - Keyword search, Category filters with counts, Brand, City, Condition, Price range
+ * - Quick price presets (Under ₹500, ₹500-₹1500, etc.)
+ * - Instant sorting (Newest, Price: Low to High, Price: High to Low)
+ * - Removable active filter chips
+ * - Skeleton loaders for seamless UX
  * - Mobile responsive filter drawer
- * - Zero emojis, 100% Lucide React icons
  */
 const Browse = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -36,7 +39,7 @@ const Browse = () => {
   // Mobile Filter Drawer Toggle
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
-  // Sorting state: 'recent' | 'price_asc' | 'price_desc'
+  // Sorting: 'recent' | 'price_asc' | 'price_desc'
   const [sortBy, setSortBy] = useState('recent');
 
   // Filter form states initialized from URL parameters
@@ -49,7 +52,19 @@ const Browse = () => {
   const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '');
 
-  // Load available categories from backend
+  // Keep local filter state synced if URL params change externally
+  useEffect(() => {
+    setSearchQuery(searchParams.get('search') || '');
+    setSelectedCategory(searchParams.get('category') || '');
+    setBrand(searchParams.get('brand') || '');
+    setCity(searchParams.get('city') || '');
+    setStateName(searchParams.get('state') || '');
+    setCondition(searchParams.get('condition') || '');
+    setMinPrice(searchParams.get('minPrice') || '');
+    setMaxPrice(searchParams.get('maxPrice') || '');
+  }, [searchParams]);
+
+  // Load available categories
   useEffect(() => {
     getCategories()
       .then((res) => {
@@ -58,7 +73,7 @@ const Browse = () => {
       .catch((err) => console.error('Failed to load categories', err));
   }, []);
 
-  // Fetch items whenever URL search parameters change
+  // Fetch items based on URL search parameters
   useEffect(() => {
     const fetchItems = async () => {
       try {
@@ -82,11 +97,9 @@ const Browse = () => {
         );
 
         if (!hasFilter) {
-          // No filters applied -> fetch all available items
           const allItems = await getAllItems();
           setItems(allItems);
         } else {
-          // Backend filter search
           const result = await searchItems(params);
           if (result.success && result.items) {
             setItems(result.items);
@@ -99,6 +112,7 @@ const Browse = () => {
         }
       } catch (err) {
         console.error('Error fetching items:', err);
+        setError('Failed to load items. Please verify your connection.');
         setItems([]);
       } finally {
         setLoading(false);
@@ -108,26 +122,37 @@ const Browse = () => {
     fetchItems();
   }, [searchParams]);
 
-  // Handle Filter Submission
-  const applyFilters = (e) => {
-    if (e) e.preventDefault();
-    const newParams = new URLSearchParams();
+  // Apply filters by pushing parameters into URL
+  const applyFilters = (overrides = {}) => {
+    const current = {
+      search: searchQuery.trim(),
+      category: selectedCategory,
+      brand: brand.trim(),
+      city: city.trim(),
+      state: stateName.trim(),
+      condition,
+      minPrice,
+      maxPrice,
+      ...overrides,
+    };
 
-    if (searchQuery.trim()) newParams.append('search', searchQuery.trim());
-    if (selectedCategory) newParams.append('category', selectedCategory);
-    if (brand.trim()) newParams.append('brand', brand.trim());
-    if (city.trim()) newParams.append('city', city.trim());
-    if (stateName.trim()) newParams.append('state', stateName.trim());
-    if (condition) newParams.append('condition', condition);
-    if (minPrice) newParams.append('minPrice', minPrice);
-    if (maxPrice) newParams.append('maxPrice', maxPrice);
+    const newParams = new URLSearchParams();
+    Object.keys(current).forEach((key) => {
+      if (current[key] !== '' && current[key] !== undefined && current[key] !== null) {
+        newParams.set(key, current[key]);
+      }
+    });
 
     setSearchParams(newParams);
     setMobileFilterOpen(false);
   };
 
-  // Reset all filters
-  const resetFilters = () => {
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    applyFilters({ search: searchQuery.trim() });
+  };
+
+  const handleClearFilters = () => {
     setSearchQuery('');
     setSelectedCategory('');
     setBrand('');
@@ -140,18 +165,26 @@ const Browse = () => {
     setMobileFilterOpen(false);
   };
 
-  const hasActiveFilters = Boolean(
-    searchQuery ||
-    selectedCategory ||
-    brand ||
-    city ||
-    stateName ||
-    condition ||
-    minPrice ||
-    maxPrice
-  );
+  const removeFilterParam = (key) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete(key);
+    setSearchParams(newParams);
+  };
 
-  // Client-side sorting on items
+  // Quick price preset selection
+  const setPricePreset = (min, max) => {
+    setMinPrice(min);
+    setMaxPrice(max);
+    applyFilters({ minPrice: min, maxPrice: max });
+  };
+
+  // Quick city chip selection
+  const handleCitySelect = (selectedCity) => {
+    setCity(selectedCity);
+    applyFilters({ city: selectedCity });
+  };
+
+  // Sort items client-side
   const sortedItems = useMemo(() => {
     const list = [...items];
     if (sortBy === 'price_asc') {
@@ -160,239 +193,348 @@ const Browse = () => {
     if (sortBy === 'price_desc') {
       return list.sort((a, b) => (b.pricePerDay || 0) - (a.pricePerDay || 0));
     }
-    // Default: 'recent'
-    return list.sort(
-      (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
-    );
+    // Default newest
+    return list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
   }, [items, sortBy]);
 
+  // Determine active filter keys for pill display
+  const activeFilterList = useMemo(() => {
+    const list = [];
+    if (searchParams.get('search')) list.push({ key: 'search', label: `Keyword: "${searchParams.get('search')}"` });
+    if (searchParams.get('category')) list.push({ key: 'category', label: `Category: ${searchParams.get('category')}` });
+    if (searchParams.get('city')) list.push({ key: 'city', label: `City: ${searchParams.get('city')}` });
+    if (searchParams.get('brand')) list.push({ key: 'brand', label: `Brand: ${searchParams.get('brand')}` });
+    if (searchParams.get('condition')) list.push({ key: 'condition', label: `Condition: ${searchParams.get('condition')}` });
+    if (searchParams.get('minPrice')) list.push({ key: 'minPrice', label: `Min: ₹${searchParams.get('minPrice')}` });
+    if (searchParams.get('maxPrice')) list.push({ key: 'maxPrice', label: `Max: ₹${searchParams.get('maxPrice')}` });
+    return list;
+  }, [searchParams]);
+
   return (
-    <div className="browse-page container">
-      {/* Top Header Bar */}
-      <div className="browse-header-row">
-        <div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 4 }}>
-            Explore Items for Rent
-          </h1>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-            Showing {sortedItems.length} {sortedItems.length === 1 ? 'product' : 'products'} ready for instant rental
-          </p>
-        </div>
+    <div className="browse-page">
+      <div className="container">
+        {/* Top Breadcrumb & Mobile Filter Button */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: 4 }}>
+              Explore Rental Marketplace
+            </h1>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+              Browse verified cameras, tools, tech, appliances, and vehicles across India
+            </p>
+          </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Mobile Filter Button */}
           <button
-            onClick={() => setMobileFilterOpen(!mobileFilterOpen)}
-            className="btn btn-secondary btn-sm mobile-filter-btn"
+            onClick={() => setMobileFilterOpen(true)}
+            className="btn btn-secondary btn-sm"
             style={{ display: 'none' }}
+            id="mobile-filter-btn"
           >
-            <Filter size={15} />
-            <span>Filters</span>
+            <SlidersHorizontal size={14} />
+            <span>Filters ({activeFilterList.length})</span>
           </button>
-
-          {/* Sort By Dropdown */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <ArrowUpDown size={15} className="text-muted" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="form-select"
-              style={{ width: 'auto', padding: '8px 12px', fontSize: 13 }}
-            >
-              <option value="recent">Sort: Recently Added</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-            </select>
-          </div>
-
-          {hasActiveFilters && (
-            <button onClick={resetFilters} className="btn btn-outline btn-sm">
-              <RotateCcw size={13} />
-              <span>Clear Filters</span>
-            </button>
-          )}
         </div>
-      </div>
 
-      <div className="browse-layout">
-        {/* Left Side: Filter Sidebar */}
-        <aside className={`filter-sidebar ${mobileFilterOpen ? 'mobile-open' : ''}`}>
-          <div className="filter-header">
-            <h3>
-              <SlidersHorizontal size={17} className="text-red" />
-              <span>Refine Search</span>
-            </h3>
-            {hasActiveFilters && (
-              <button onClick={resetFilters} className="filter-reset-btn">
-                Reset
-              </button>
-            )}
+        {/* Alternative item recommendation notice from backend search */}
+        {alternativeNotice && (
+          <div className="alert alert-warning" style={{ marginBottom: 20 }}>
+            <span>{alternativeNotice}</span>
           </div>
+        )}
 
-          <form onSubmit={applyFilters}>
-            {/* 1. Keyword Search */}
-            <div className="filter-group">
-              <label className="filter-label">Search Keyword</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="text"
-                  placeholder="e.g. Laptop, Camera, Car..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="form-input"
-                  style={{ paddingLeft: 34 }}
-                />
-                <Search
-                  size={15}
-                  className="text-muted"
-                  style={{ position: 'absolute', left: 10, top: 12 }}
-                />
-              </div>
+        <div className="browse-layout">
+          {/* ========================================================
+              LEFT SIDEBAR: OLX-INSPIRED MULTI-FILTER PANEL
+              ======================================================== */}
+          <aside className="filter-sidebar">
+            <div className="filter-header">
+              <h3>
+                <SlidersHorizontal size={18} className="text-red" />
+                <span>Filter Items</span>
+              </h3>
+              {activeFilterList.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearFilters}
+                  className="btn btn-ghost btn-sm"
+                  style={{ color: 'var(--primary)', padding: '2px 6px', fontSize: '0.78rem' }}
+                >
+                  <RotateCcw size={12} />
+                  <span>Reset All</span>
+                </button>
+              )}
             </div>
 
-            {/* 2. Category Select */}
-            <div className="filter-group">
-              <label className="filter-label">Category</label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="form-select"
+            <form onSubmit={handleSearchSubmit}>
+              {/* Filter 1: Search Keyword */}
+              <div className="filter-section">
+                <label className="filter-title">Search Keyword</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    placeholder="Search by name, model..."
+                    className="form-input"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{ paddingRight: 32 }}
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => { setSearchQuery(''); applyFilters({ search: '' }); }}
+                      style={{ position: 'absolute', right: 8, top: 10, background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                    >
+                      <X size={15} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Filter 2: Categories */}
+              <div className="filter-section">
+                <label className="filter-title">Category</label>
+                <div className="filter-options-list">
+                  <label className="filter-option-label">
+                    <input
+                      type="radio"
+                      name="categoryFilter"
+                      checked={selectedCategory === ''}
+                      onChange={() => {
+                        setSelectedCategory('');
+                        applyFilters({ category: '' });
+                      }}
+                    />
+                    <span>All Categories</span>
+                  </label>
+                  {categories.map((cat) => (
+                    <label key={cat._id} className="filter-option-label">
+                      <input
+                        type="radio"
+                        name="categoryFilter"
+                        checked={selectedCategory === cat.name}
+                        onChange={() => {
+                          setSelectedCategory(cat.name);
+                          applyFilters({ category: cat.name });
+                        }}
+                      />
+                      <span>{cat.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Filter 3: Location / City */}
+              <div className="filter-section">
+                <label className="filter-title">Location / City</label>
+                <div style={{ position: 'relative', marginBottom: 10 }}>
+                  <input
+                    type="text"
+                    placeholder="e.g. Sonipat, Delhi"
+                    className="form-input"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    style={{ paddingLeft: 32 }}
+                  />
+                  <MapPin
+                    size={14}
+                    className="text-muted"
+                    style={{ position: 'absolute', left: 10, top: 12 }}
+                  />
+                </div>
+                {/* Popular City Chips */}
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {['Delhi', 'Sonipat', 'Panipat', 'Karnal', 'Mumbai'].map((cityName) => (
+                    <button
+                      key={cityName}
+                      type="button"
+                      onClick={() => handleCitySelect(cityName)}
+                      className={`quick-tag-pill ${city.toLowerCase() === cityName.toLowerCase() ? 'active' : ''}`}
+                      style={{ fontSize: '0.75rem', padding: '2px 8px' }}
+                    >
+                      {cityName}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Filter 4: Price Range (Per Day) */}
+              <div className="filter-section">
+                <label className="filter-title">Price Per Day (₹)</label>
+                <div className="price-inputs-row" style={{ marginBottom: 10 }}>
+                  <input
+                    type="number"
+                    placeholder="Min ₹"
+                    className="form-input"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                    min="0"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Max ₹"
+                    className="form-input"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                    min="0"
+                  />
+                </div>
+                {/* Quick Presets */}
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPricePreset('', '500')}
+                    className="quick-tag-pill"
+                    style={{ fontSize: '0.72rem', padding: '2px 8px' }}
+                  >
+                    Under ₹500
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPricePreset('500', '1500')}
+                    className="quick-tag-pill"
+                    style={{ fontSize: '0.72rem', padding: '2px 8px' }}
+                  >
+                    ₹500 - ₹1.5k
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPricePreset('1500', '5000')}
+                    className="quick-tag-pill"
+                    style={{ fontSize: '0.72rem', padding: '2px 8px' }}
+                  >
+                    ₹1.5k - ₹5k
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPricePreset('5000', '')}
+                    className="quick-tag-pill"
+                    style={{ fontSize: '0.72rem', padding: '2px 8px' }}
+                  >
+                    ₹5000+
+                  </button>
+                </div>
+              </div>
+
+              {/* Filter 5: Condition */}
+              <div className="filter-section">
+                <label className="filter-title">Item Condition</label>
+                <select
+                  value={condition}
+                  onChange={(e) => {
+                    setCondition(e.target.value);
+                    applyFilters({ condition: e.target.value });
+                  }}
+                  className="form-select"
+                >
+                  <option value="">Any Condition</option>
+                  <option value="new">Brand New</option>
+                  <option value="like_new">Like New</option>
+                  <option value="good">Good Condition</option>
+                  <option value="fair">Fair Condition</option>
+                </select>
+              </div>
+
+              {/* Apply Filters Button */}
+              <button
+                type="submit"
+                className="btn btn-primary"
+                style={{ width: '100%', marginTop: 8 }}
               >
-                <option value="">All Categories</option>
-                {categories.map((cat) => (
-                  <option key={cat._id} value={cat.name}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* 3. Brand Filter */}
-            <div className="filter-group">
-              <label className="filter-label">Brand</label>
-              <input
-                type="text"
-                placeholder="e.g. Sony, HP, Canon..."
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
-                className="form-input"
-              />
-            </div>
-
-            {/* 4. City Filter */}
-            <div className="filter-group">
-              <label className="filter-label">City</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="text"
-                  placeholder="e.g. Karnal, Sonipat..."
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  className="form-input"
-                  style={{ paddingLeft: 34 }}
-                />
-                <MapPin
-                  size={15}
-                  className="text-muted"
-                  style={{ position: 'absolute', left: 10, top: 12 }}
-                />
-              </div>
-            </div>
-
-            {/* 5. State Filter */}
-            <div className="filter-group">
-              <label className="filter-label">State</label>
-              <input
-                type="text"
-                placeholder="e.g. Haryana, Delhi..."
-                value={stateName}
-                onChange={(e) => setStateName(e.target.value)}
-                className="form-input"
-              />
-            </div>
-
-            {/* 6. Condition Filter */}
-            <div className="filter-group">
-              <label className="filter-label">Condition</label>
-              <select
-                value={condition}
-                onChange={(e) => setCondition(e.target.value)}
-                className="form-select"
-              >
-                <option value="">Any Condition</option>
-                <option value="new">Brand New</option>
-                <option value="like_new">Like New</option>
-                <option value="good">Good Condition</option>
-                <option value="fair">Fair Condition</option>
-              </select>
-            </div>
-
-            {/* 7. Price Range Filter */}
-            <div className="filter-group">
-              <label className="filter-label">Daily Price (₹)</label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="number"
-                  placeholder="Min"
-                  value={minPrice}
-                  onChange={(e) => setMinPrice(e.target.value)}
-                  className="form-input"
-                  min="0"
-                />
-                <input
-                  type="number"
-                  placeholder="Max"
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
-                  className="form-input"
-                  min="0"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="btn btn-primary"
-              style={{ width: '100%', marginTop: 8 }}
-            >
-              Apply Filters
-            </button>
-          </form>
-        </aside>
-
-        {/* Right Side: Product Listing Grid */}
-        <main className="browse-content">
-          {alternativeNotice && (
-            <div className="alert alert-warning" style={{ marginBottom: 20 }}>
-              <span>{alternativeNotice}</span>
-            </div>
-          )}
-
-          {loading ? (
-            <div className="spinner"></div>
-          ) : error ? (
-            <div className="alert alert-danger">{error}</div>
-          ) : sortedItems.length > 0 ? (
-            <div className="grid-cards">
-              {sortedItems.map((item) => (
-                <ItemCard key={item._id} item={item} />
-              ))}
-            </div>
-          ) : (
-            <div className="card empty-state-box">
-              <div className="empty-icon-circle">
-                <Package size={30} />
-              </div>
-              <h3>No matching gear found</h3>
-              <p>
-                We could not find items matching your current filters. Try relaxing your search terms or expanding your city.
-              </p>
-              <button onClick={resetFilters} className="btn btn-primary">
-                View All Available Items
+                <Search size={15} />
+                <span>Apply Filters</span>
               </button>
+            </form>
+          </aside>
+
+          {/* ========================================================
+              RIGHT AREA: RESULTS TOOLBAR & PRODUCT GRID
+              ======================================================== */}
+          <main>
+            {/* Toolbar */}
+            <div className="browse-toolbar">
+              <div className="browse-results-count">
+                Showing <strong>{sortedItems.length}</strong> available rental items
+              </div>
+
+              <div className="browse-sort-group">
+                <ArrowUpDown size={15} className="text-muted" />
+                <span style={{ color: 'var(--text-secondary)' }}>Sort by:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="browse-sort-select"
+                >
+                  <option value="recent">Recently Listed</option>
+                  <option value="price_asc">Price: Low to High</option>
+                  <option value="price_desc">Price: High to Low</option>
+                </select>
+              </div>
             </div>
-          )}
-        </main>
+
+            {/* Active Filter Chips */}
+            {activeFilterList.length > 0 && (
+              <div className="active-filters-chips">
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                  Active Filters:
+                </span>
+                {activeFilterList.map((item) => (
+                  <span key={item.key} className="filter-chip">
+                    <span>{item.label}</span>
+                    <span
+                      onClick={() => removeFilterParam(item.key)}
+                      className="filter-chip-remove"
+                      title="Remove filter"
+                    >
+                      <X size={13} />
+                    </span>
+                  </span>
+                ))}
+                <button
+                  onClick={handleClearFilters}
+                  style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, marginLeft: 4 }}
+                >
+                  Clear All
+                </button>
+              </div>
+            )}
+
+            {/* Results Grid / Skeletons / Empty State */}
+            {loading ? (
+              <div className="grid-cards">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                  <div key={n} className="skeleton skeleton-card"></div>
+                ))}
+              </div>
+            ) : error ? (
+              <div className="alert alert-danger">{error}</div>
+            ) : sortedItems.length > 0 ? (
+              <div className="grid-cards">
+                {sortedItems.map((item) => (
+                  <ItemCard key={item._id} item={item} />
+                ))}
+              </div>
+            ) : (
+              <div className="card empty-state-box">
+                <div className="empty-icon-circle">
+                  <Package size={34} />
+                </div>
+                <h3>No rental items match your criteria</h3>
+                <p>
+                  Try widening your price range, choosing another category, or clearing your keyword filter.
+                </p>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <button onClick={handleClearFilters} className="btn btn-primary">
+                    <RotateCcw size={15} />
+                    <span>Reset All Filters</span>
+                  </button>
+                  <Link to="/create-item" className="btn btn-secondary">
+                    List This Item
+                  </Link>
+                </div>
+              </div>
+            )}
+          </main>
+        </div>
       </div>
     </div>
   );

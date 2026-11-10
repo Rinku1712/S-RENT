@@ -35,3 +35,8 @@ export const updateItemImages = async (itemId, files) => {
   });
   return response.data;
 };
+
+export const deleteItem = async (itemId) => {
+  const response = await api.delete(`/api/item/${itemId}`);
+  return response.data;
+};

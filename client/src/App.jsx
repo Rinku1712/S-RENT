@@ -1,6 +1,7 @@
 import { Component } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { WishlistProvider } from './context/WishlistContext';
 import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -92,85 +93,87 @@ function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <BrowserRouter>
-          <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            {/* Sticky Navigation Bar */}
-            <Navbar />
+        <WishlistProvider>
+          <BrowserRouter>
+            <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+              {/* Sticky Navigation Bar */}
+              <Navbar />
 
-            {/* Main Application Routes */}
-            <main style={{ flex: 1 }}>
-              <Routes>
-                {/* 1. Public Routes (Accessible without login) */}
-                <Route path="/" element={<Home />} />
-                <Route path="/items" element={<Browse />} />
-                <Route path="/browse" element={<Browse />} />
-                <Route path="/items/:id" element={<ItemDetails />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/verify-otp" element={<VerifyOTP />} />
-                <Route path="/admin/login" element={<AdminLogin />} />
+              {/* Main Application Routes */}
+              <main style={{ flex: 1 }}>
+                <Routes>
+                  {/* 1. Public Routes (Accessible without login) */}
+                  <Route path="/" element={<Home />} />
+                  <Route path="/items" element={<Browse />} />
+                  <Route path="/browse" element={<Browse />} />
+                  <Route path="/items/:id" element={<ItemDetails />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/verify-otp" element={<VerifyOTP />} />
+                  <Route path="/admin/login" element={<AdminLogin />} />
 
-                {/* 2. Protected Registered User Routes */}
-                <Route
-                  path="/create-item"
-                  element={
-                    <ProtectedRoute>
-                      <CreateItem />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <UserDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/user/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <UserDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  }
-                />
+                  {/* 2. Protected Registered User Routes */}
+                  <Route
+                    path="/create-item"
+                    element={
+                      <ProtectedRoute>
+                        <CreateItem />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <UserDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/user/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <UserDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/profile"
+                    element={
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    }
+                  />
 
-                {/* 3. Protected SuperAdmin Routes */}
-                <Route
-                  path="/admin/dashboard"
-                  element={
-                    <AdminRoute>
-                      <AdminDashboard />
-                    </AdminRoute>
-                  }
-                />
-                <Route
-                  path="/admin/categories"
-                  element={
-                    <AdminRoute>
-                      <AdminCategories />
-                    </AdminRoute>
-                  }
-                />
+                  {/* 3. Protected SuperAdmin Routes */}
+                  <Route
+                    path="/admin/dashboard"
+                    element={
+                      <AdminRoute>
+                        <AdminDashboard />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/categories"
+                    element={
+                      <AdminRoute>
+                        <AdminCategories />
+                      </AdminRoute>
+                    }
+                  />
 
-                {/* 4. Fallback 404 Route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
+                  {/* 4. Fallback 404 Route */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </main>
 
-            {/* Shared Footer */}
-            <Footer />
-          </div>
-        </BrowserRouter>
+              {/* Shared Footer */}
+              <Footer />
+            </div>
+          </BrowserRouter>
+        </WishlistProvider>
       </AuthProvider>
     </ErrorBoundary>
   );

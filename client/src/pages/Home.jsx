@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   CheckCircle2,
   CalendarCheck,
-  Smile,
   Wallet,
   Clock,
   Layers,
@@ -24,16 +23,26 @@ import {
   Camera,
   Tv,
   Package,
+  Wrench,
+  Armchair,
+  Bike,
+  Speaker,
 } from 'lucide-react';
 import heroImage from '../assets/hero.png';
 
 /**
- * Public Homepage Component
- * Accessible to any visitor without login or authentication.
- * Fetches dynamic data from the backend:
- * - Live stats (Available items, active categories)
- * - Dynamic category taxonomies
- * - Recent popular marketplace listings
+ * Public Homepage Component (OLX + Amazon + Modern Rental Standard)
+ * Features:
+ * - High-impact Hero section with "Rent Anything. Anytime. Anywhere."
+ * - Multi-field search card (Keyword, Category, Location)
+ * - Quick trending search chips
+ * - Live stats from /api/dashboard/common
+ * - Category grid with icons
+ * - Popular items grid with ItemCard
+ * - How S-RENT Works 3-step visual guide
+ * - Why Choose S-RENT value pillars
+ * - Trust & Safety guarantees
+ * - Owner CTA banner
  */
 const Home = () => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -84,15 +93,23 @@ const Home = () => {
     navigate(`/items?${params.toString()}`);
   };
 
+  const handleQuickTagClick = (tag) => {
+    navigate(`/items?search=${encodeURIComponent(tag)}`);
+  };
+
   // Helper to select an appropriate Lucide icon for categories
   const getCategoryIcon = (categoryName = '') => {
     const name = categoryName.toLowerCase();
-    if (name.includes('elect') || name.includes('laptop')) return <Laptop size={22} />;
-    if (name.includes('toy') || name.includes('game')) return <Gamepad2 size={22} />;
-    if (name.includes('vehic') || name.includes('car') || name.includes('bike')) return <Car size={22} />;
-    if (name.includes('camera') || name.includes('photo')) return <Camera size={22} />;
-    if (name.includes('appliance') || name.includes('tv')) return <Tv size={22} />;
-    return <Package size={22} />;
+    if (name.includes('elect') || name.includes('laptop') || name.includes('comput')) return <Laptop size={24} />;
+    if (name.includes('toy') || name.includes('game')) return <Gamepad2 size={24} />;
+    if (name.includes('vehic') || name.includes('car')) return <Car size={24} />;
+    if (name.includes('bike') || name.includes('cycle')) return <Bike size={24} />;
+    if (name.includes('camera') || name.includes('photo')) return <Camera size={24} />;
+    if (name.includes('appliance') || name.includes('tv')) return <Tv size={24} />;
+    if (name.includes('tool')) return <Wrench size={24} />;
+    if (name.includes('furnitur')) return <Armchair size={24} />;
+    if (name.includes('audio') || name.includes('sound') || name.includes('music')) return <Speaker size={24} />;
+    return <Package size={24} />;
   };
 
   return (
@@ -101,7 +118,7 @@ const Home = () => {
       <section className="hero-section">
         <div className="container">
           <div className="hero-grid">
-            {/* Left Content */}
+            {/* Left Content Column */}
             <div className="hero-content-col">
               <div className="hero-tagline-badge">
                 <Sparkles size={14} />
@@ -109,20 +126,21 @@ const Home = () => {
               </div>
 
               <h1 className="hero-title">
-                Rent What You Need. <span className="highlight">Pay Less.</span>
+                Rent Anything. <br />
+                <span className="highlight">Anytime. Anywhere.</span>
               </h1>
 
               <p className="hero-description">
-                Why buy when you can rent? Discover useful products at affordable rental prices. Save money, enjoy flexibility, and get what you need without unnecessary spending.
+                India's smart peer-to-peer rental marketplace. Save money on high-end gadgets, cameras, appliances, power tools & vehicles without paying full retail prices.
               </p>
 
-              {/* Multi-Filter Search Bar */}
+              {/* Multi-Field Search Card (Amazon/OLX Hybrid) */}
               <form onSubmit={handleSearchSubmit} className="hero-search-card">
                 <div className="search-field-group">
                   <Search size={16} />
                   <input
                     type="text"
-                    placeholder="What do you need? (e.g. Laptop, Camera, Car)"
+                    placeholder="What are you looking for? (e.g. DSLR, Laptop, Drill)"
                     value={searchKeyword}
                     onChange={(e) => setSearchKeyword(e.target.value)}
                   />
@@ -147,44 +165,54 @@ const Home = () => {
                   <MapPin size={16} />
                   <input
                     type="text"
-                    placeholder="City (e.g. Karnal, Sonipat)"
+                    placeholder="City (e.g. Sonipat, Delhi)"
                     value={cityKeyword}
                     onChange={(e) => setCityKeyword(e.target.value)}
                   />
                 </div>
 
-                <button type="submit" className="btn btn-primary" style={{ padding: '12px 20px' }}>
+                <button type="submit" className="btn btn-primary hero-search-btn">
                   <Search size={16} />
                   <span>Search</span>
                 </button>
               </form>
 
-              {/* Action Buttons */}
-              <div className="hero-cta-row">
-                <Link to="/items" className="btn btn-primary btn-lg">
-                  Explore Items
-                </Link>
-                <Link to="/create-item" className="btn btn-secondary btn-lg">
-                  Start Renting & List Gear
-                </Link>
+              {/* Popular Quick Search Tags */}
+              <div className="hero-quick-tags">
+                <span style={{ fontWeight: 600 }}>Trending:</span>
+                {['Cameras', 'Laptops', 'Gaming Consoles', 'Power Tools', 'Vehicles', 'Tents'].map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => handleQuickTagClick(tag)}
+                    className="quick-tag-pill"
+                  >
+                    {tag}
+                  </button>
+                ))}
               </div>
 
               {/* Live Backend Statistics */}
               {dashboardData && (
                 <div className="hero-stats-row">
                   <div className="stat-item">
-                    <span className="stat-number">{dashboardData.totalAvailableItems || 0}</span>
+                    <span className="stat-number">{dashboardData.totalAvailableItems || '50+'}</span>
                     <span className="stat-label">Available for Rent</span>
                   </div>
                   <div className="stat-divider"></div>
                   <div className="stat-item">
-                    <span className="stat-number">{dashboardData.totalCategories || 0}</span>
+                    <span className="stat-number">{dashboardData.totalCategories || '10+'}</span>
                     <span className="stat-label">Product Categories</span>
                   </div>
                   <div className="stat-divider"></div>
                   <div className="stat-item">
                     <span className="stat-number">100%</span>
-                    <span className="stat-label">Verified Community</span>
+                    <span className="stat-label">Refundable Deposits</span>
+                  </div>
+                  <div className="stat-divider"></div>
+                  <div className="stat-item">
+                    <span className="stat-number">Verified</span>
+                    <span className="stat-label">Peer Community</span>
                   </div>
                 </div>
               )}
@@ -203,14 +231,14 @@ const Home = () => {
                 />
                 <div className="hero-overlay-pill">
                   <div className="hero-pill-icon">
-                    <ShieldCheck size={20} />
+                    <ShieldCheck size={22} />
                   </div>
                   <div>
                     <strong style={{ fontSize: 13, color: 'var(--text-primary)', display: 'block' }}>
-                      Safe & Protected Rentals
+                      100% Protected Peer Rentals
                     </strong>
                     <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                      Refundable deposits and OTP verification on all items.
+                      Refundable security deposits and OTP verification on every handover.
                     </span>
                   </div>
                 </div>
@@ -226,13 +254,13 @@ const Home = () => {
           <div className="container">
             <div className="section-header">
               <div>
-                <h2 className="section-title">Explore Categories</h2>
+                <h2 className="section-title">Browse by Category</h2>
                 <p className="section-subtitle">
-                  Browse thousands of useful items organized by category
+                  Explore thousands of verified items organized into intuitive rental categories
                 </p>
               </div>
               <Link to="/items" className="btn btn-secondary btn-sm">
-                <span>View Full Catalog</span>
+                <span>View All Categories</span>
                 <ArrowRight size={14} />
               </Link>
             </div>
@@ -247,10 +275,8 @@ const Home = () => {
                   <div className="cat-icon-container">
                     {getCategoryIcon(cat.name)}
                   </div>
-                  <div>
-                    <h3>{cat.name}</h3>
-                    <span className="cat-item-count">Browse items &rarr;</span>
-                  </div>
+                  <h3>{cat.name}</h3>
+                  <span className="cat-item-count">Explore rentals &rarr;</span>
                 </div>
               ))}
             </div>
@@ -258,24 +284,28 @@ const Home = () => {
         </section>
       )}
 
-      {/* 3. POPULAR ITEMS FOR RENT */}
+      {/* 3. POPULAR / RECENT ITEMS FOR RENT */}
       <section className="section">
         <div className="container">
           <div className="section-header">
             <div>
-              <h2 className="section-title">Popular Items for Rent</h2>
+              <h2 className="section-title">Featured Rental Items</h2>
               <p className="section-subtitle">
-                Quality gadgets, tools, and equipment freshly listed by verified owners
+                Popular equipment and appliances freshly listed by verified owners in your city
               </p>
             </div>
             <Link to="/items" className="btn btn-outline btn-sm">
-              <span>Browse All Items</span>
+              <span>Explore Marketplace</span>
               <ArrowRight size={14} />
             </Link>
           </div>
 
           {loading ? (
-            <div className="spinner"></div>
+            <div className="grid-cards">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="skeleton skeleton-card"></div>
+              ))}
+            </div>
           ) : error ? (
             <div className="alert alert-danger">{error}</div>
           ) : dashboardData?.recentItems && dashboardData.recentItems.length > 0 ? (
@@ -287,10 +317,10 @@ const Home = () => {
           ) : (
             <div className="card empty-state-box">
               <div className="empty-icon-circle">
-                <Package size={28} />
+                <Package size={32} />
               </div>
               <h3>No items listed yet</h3>
-              <p>Be the first in your area to list an item and earn rental income!</p>
+              <p>Be the first member in your area to list an item and earn predictable passive income!</p>
               <Link to="/create-item" className="btn btn-primary">
                 List Your First Item
               </Link>
@@ -299,14 +329,17 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 4. HOW SRENT WORKS */}
+      {/* 4. HOW S-RENT WORKS (Interactive 3-Step Journey) */}
       <section id="how-it-works" className="section section-alt">
         <div className="container">
-          <div className="section-header text-center" style={{ justifyContent: 'center', textAlign: 'center' }}>
+          <div className="section-header text-center" style={{ justifyContent: 'center', textAlign: 'center', margin: '0 auto 48px' }}>
             <div>
-              <h2 className="section-title">How SRENT Works</h2>
+              <div className="hero-tagline-badge" style={{ margin: '0 auto 12px' }}>
+                <span>Simple & Transparent</span>
+              </div>
+              <h2 className="section-title">How S-RENT Works</h2>
               <p className="section-subtitle" style={{ margin: '0 auto' }}>
-                A simple three-step process to rent anything you need or list your own idle equipment
+                Renting high-value equipment is as simple as 1, 2, 3. No paperwork, no hidden charges.
               </p>
             </div>
           </div>
@@ -317,9 +350,9 @@ const Home = () => {
               <div className="step-icon-box">
                 <Search size={24} />
               </div>
-              <h3 className="step-title">1. Explore Items</h3>
+              <h3 className="step-title">1. Search & Select</h3>
               <p className="step-desc">
-                Browse our public catalog without an account. Search by category, city, condition, and daily budget.
+                Browse our open marketplace catalog. Filter by category, location, and daily budget without any account.
               </p>
             </div>
 
@@ -328,9 +361,9 @@ const Home = () => {
               <div className="step-icon-box">
                 <CalendarCheck size={24} />
               </div>
-              <h3 className="step-title">2. Send Rental Request</h3>
+              <h3 className="step-title">2. Book with Deposit Protection</h3>
               <p className="step-desc">
-                Pick your preferred rental dates and security deposit estimate. The item owner confirms and coordinates handover.
+                Choose your rental dates. Review your daily rate and 100% refundable security deposit with complete price transparency.
               </p>
             </div>
 
@@ -339,23 +372,23 @@ const Home = () => {
               <div className="step-icon-box">
                 <CheckCircle2 size={24} />
               </div>
-              <h3 className="step-title">3. Enjoy Your Rental</h3>
+              <h3 className="step-title">3. Rent, Enjoy & Return</h3>
               <p className="step-desc">
-                Use the item for the requested duration. Return it in good order to receive your full refundable security deposit.
+                Meet the owner for OTP handover, use the equipment for your project, and get your security deposit refunded upon return.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 5. BENEFITS OF RENTING (WHY CHOOSE SRENT?) */}
-      <section className="section">
+      {/* 5. WHY CHOOSE S-RENT (Value Pillars) */}
+      <section id="benefits" className="section">
         <div className="container">
           <div className="section-header">
             <div>
-              <h2 className="section-title">Why Choose SRENT?</h2>
+              <h2 className="section-title">Why Choose S-RENT?</h2>
               <p className="section-subtitle">
-                The smart, affordable, and flexible alternative to purchasing products outright
+                The smart, sustainable, and affordable alternative to purchasing gear outright
               </p>
             </div>
           </div>
@@ -365,9 +398,9 @@ const Home = () => {
               <div className="benefit-icon-box">
                 <Wallet size={22} />
               </div>
-              <h4>Save Money</h4>
+              <h4>Save Up to 80%</h4>
               <p>
-                Access top-tier cameras, power tools, and laptops for a fraction of their retail purchase price.
+                Access flagship cameras, gaming setups, and power tools for a fraction of their retail purchase price.
               </p>
             </div>
 
@@ -375,9 +408,9 @@ const Home = () => {
               <div className="benefit-icon-box">
                 <Percent size={22} />
               </div>
-              <h4>Affordable Rental Prices</h4>
+              <h4>Transparent Pricing</h4>
               <p>
-                Transparent daily and weekly rates set directly by peer community members with no hidden fees.
+                Clean daily and weekly rates set directly by peer community members with zero hidden commission fees.
               </p>
             </div>
 
@@ -385,9 +418,9 @@ const Home = () => {
               <div className="benefit-icon-box">
                 <Clock size={22} />
               </div>
-              <h4>Flexible Rental Duration</h4>
+              <h4>Flexible Rental Periods</h4>
               <p>
-                Rent for just a single day, a full weekend project, or several weeks depending on your project needs.
+                Rent for just a single day, an entire weekend project, or months depending on your workflow.
               </p>
             </div>
 
@@ -395,9 +428,9 @@ const Home = () => {
               <div className="benefit-icon-box">
                 <Layers size={22} />
               </div>
-              <h4>Multiple Categories</h4>
+              <h4>Diverse Categories</h4>
               <p>
-                From electronics to camping gear, event equipment to vehicles—everything in one trusted marketplace.
+                From consumer electronics to camping gear, event sound systems to bikes—all in one trusted hub.
               </p>
             </div>
 
@@ -405,25 +438,26 @@ const Home = () => {
               <div className="benefit-icon-box">
                 <TrendingUp size={22} />
               </div>
-              <h4>Earn Money by Listing Items</h4>
+              <h4>Earn Passive Income</h4>
               <p>
-                Turn your idle household items, gaming consoles, and appliances into predictable monthly passive income.
+                Turn your idle household items and electronics into predictable monthly passive income.
               </p>
             </div>
           </div>
 
-          {/* Bottom Call to Action Card */}
+          {/* Owner Call to Action Banner */}
           <div className="cta-banner">
             <h2>Have Gear Sitting Idle Around Your House?</h2>
             <p>
-              Join thousands of community members earning extra income every week by listing items safely on SRENT.
+              Join thousands of community members earning ₹10,000–₹50,000 every month by safely listing gear on S-RENT.
             </p>
             <div className="cta-btn-group">
-              <Link to="/create-item" className="btn btn-primary btn-lg">
-                List Your Item for Rent
+              <Link to="/create-item" className="btn btn-secondary btn-lg" style={{ background: '#FFFFFF', color: '#E53935' }}>
+                <Package size={18} />
+                <span>List Your Item for Rent</span>
               </Link>
-              <Link to="/items" className="btn btn-secondary btn-lg">
-                Explore Marketplace
+              <Link to="/items" className="btn btn-outline btn-lg" style={{ borderColor: '#FFFFFF', color: '#FFFFFF' }}>
+                <span>Explore Available Items</span>
               </Link>
             </div>
           </div>

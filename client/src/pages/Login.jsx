@@ -9,16 +9,13 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
+  ShieldCheck,
+  CheckCircle2,
 } from 'lucide-react';
 
 /**
- * User Login Page
+ * Premium S-RENT Authentication Page
  * URL: /login
- * Features:
- * - Red and Pure White startup authentication card
- * - Email and Password inputs with show/hide toggle
- * - Redirects to intended page (e.g. /items/:id) or /dashboard
- * - Zero emojis, 100% Lucide React icons
  */
 const Login = () => {
   const location = useLocation();
@@ -63,12 +60,12 @@ const Login = () => {
           <div className="brand-icon-box" style={{ margin: '0 auto 12px' }}>
             <span>S</span>
           </div>
-          <h2>Welcome to SRENT</h2>
-          <p>Login to manage your rentals and listings</p>
+          <h2>Welcome to S-RENT</h2>
+          <p>Sign in to manage your rentals, listings, and bookings</p>
         </div>
 
         {error && (
-          <div className="alert alert-danger">
+          <div className="alert alert-danger" style={{ marginBottom: 20 }}>
             <AlertCircle size={16} style={{ flexShrink: 0 }} />
             <div>
               <span>{error}</span>
@@ -94,11 +91,11 @@ const Login = () => {
               <input
                 type="email"
                 required
-                placeholder="user@example.com"
+                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="form-input"
-                style={{ paddingLeft: 36 }}
+                style={{ paddingLeft: 38 }}
                 autoFocus
               />
               <Mail
@@ -120,7 +117,7 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="form-input"
-                style={{ paddingLeft: 36 }}
+                style={{ paddingLeft: 38 }}
               />
               <Lock
                 size={16}
@@ -145,18 +142,35 @@ const Login = () => {
             style={{ width: '100%', marginTop: 8, justifyContent: 'center' }}
           >
             <LogIn size={16} />
-            <span>{loading ? 'Signing in...' : 'Sign In'}</span>
+            <span>{loading ? 'Signing in...' : 'Sign In to Account'}</span>
           </button>
         </form>
 
         {/* Footer Navigation */}
         <div className="auth-footer">
-          <p style={{ fontSize: 14 }}>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>
             Don't have an account?{' '}
-            <Link to="/signup" className="text-red" style={{ fontWeight: 600 }}>
-              Sign up for free
+            <Link to="/signup" className="text-red" style={{ fontWeight: 700 }}>
+              Create an account
             </Link>
           </p>
+
+          <div
+            style={{
+              marginTop: 18,
+              paddingTop: 14,
+              borderTop: '1px solid var(--border-light)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              fontSize: '0.78rem',
+              color: 'var(--text-muted)',
+            }}
+          >
+            <ShieldCheck size={14} className="text-success" />
+            <span>256-Bit Encrypted & Verified Marketplace</span>
+          </div>
         </div>
       </div>
     </div>

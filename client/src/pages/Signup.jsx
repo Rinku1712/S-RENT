@@ -1,19 +1,23 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signup } from '../services/authService';
-// import { UserPlus, User, Mail, Phone, Lock, MapPin, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import { UserPlus, User, Mail, Phone, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import {
+  UserPlus,
+  User,
+  Mail,
+  Phone,
+  Lock,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  MapPin,
+  ShieldCheck,
+} from 'lucide-react';
 
 /**
- * User Registration Page
+ * Premium S-RENT User Registration Page
  * URL: /signup
- * Features:
- * - Professional registration form matching backend User schema
- * - Full Name, Email, Phone, City, State, Password, Confirm Password
- * - Direct OTP verification redirection
- * - Zero emojis, 100% Lucide React icons
  */
-
 const Signup = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -78,18 +82,18 @@ const Signup = () => {
 
   return (
     <div className="auth-page">
-      <div className="auth-card" style={{ maxWidth: 480 }}>
+      <div className="auth-card" style={{ maxWidth: 520 }}>
         {/* Brand Header */}
         <div className="auth-header">
           <div className="brand-icon-box" style={{ margin: '0 auto 12px' }}>
             <span>S</span>
           </div>
-          <h2>Create Your Account</h2>
-          <p>Join the SRENT community to rent gear and earn passive income</p>
+          <h2>Join S-RENT</h2>
+          <p>Create your verified peer-to-peer rental account</p>
         </div>
 
         {error && (
-          <div className="alert alert-danger">
+          <div className="alert alert-danger" style={{ marginBottom: 20 }}>
             <AlertCircle size={16} style={{ flexShrink: 0 }} />
             <span>{error}</span>
           </div>
@@ -104,13 +108,11 @@ const Signup = () => {
                 type="text"
                 name="name"
                 required
-                minLength="2"
-                maxLength="80"
                 placeholder="e.g. Rahul Sharma"
                 value={formData.name}
                 onChange={handleChange}
                 className="form-input"
-                style={{ paddingLeft: 36 }}
+                style={{ paddingLeft: 38 }}
                 autoFocus
               />
               <User
@@ -121,69 +123,81 @@ const Signup = () => {
             </div>
           </div>
 
-          {/* Email Address */}
-          <div className="form-group">
-            <label className="form-label">Email Address *</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="email"
-                name="email"
-                required
-                placeholder="e.g. rahul@example.com"
-                value={formData.email}
-                onChange={handleChange}
-                className="form-input"
-                style={{ paddingLeft: 36 }}
-              />
-              <Mail
-                size={16}
-                className="text-muted"
-                style={{ position: 'absolute', left: 12, top: 13 }}
-              />
+          {/* Email & Phone Row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div className="form-group">
+              <label className="form-label">Email Address *</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  placeholder="name@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="form-input"
+                  style={{ paddingLeft: 38 }}
+                />
+                <Mail
+                  size={16}
+                  className="text-muted"
+                  style={{ position: 'absolute', left: 12, top: 13 }}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Phone Number *</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="tel"
+                  name="phone"
+                  required
+                  placeholder="9876543210"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="form-input"
+                  style={{ paddingLeft: 38 }}
+                />
+                <Phone
+                  size={16}
+                  className="text-muted"
+                  style={{ position: 'absolute', left: 12, top: 13 }}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Phone Number */}
-          <div className="form-group">
-            <label className="form-label">Phone Number *</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="tel"
-                name="phone"
-                required
-                placeholder="e.g. 9876543210"
-                value={formData.phone}
-                onChange={handleChange}
-                className="form-input"
-                style={{ paddingLeft: 36 }}
-              />
-              <Phone
-                size={16}
-                className="text-muted"
-                style={{ position: 'absolute', left: 12, top: 13 }}
-              />
+          {/* City & State Row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div className="form-group">
+              <label className="form-label">City *</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="text"
+                  name="city"
+                  required
+                  placeholder="e.g. Karnal"
+                  value={formData.city}
+                  onChange={handleChange}
+                  className="form-input"
+                  style={{ paddingLeft: 38 }}
+                />
+                <MapPin
+                  size={16}
+                  className="text-muted"
+                  style={{ position: 'absolute', left: 12, top: 13 }}
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Location Fields */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div className="form-group">
-              <label className="form-label">City</label>
-              <input
-                type="text"
-                name="city"
-                placeholder="City (e.g. Sonipat)"
-                value={formData.city}
-                onChange={handleChange}
-                className="form-input"
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">State</label>
+              <label className="form-label">State *</label>
               <input
                 type="text"
                 name="state"
-                placeholder="State (e.g. Haryana)"
+                required
+                placeholder="e.g. Haryana"
                 value={formData.state}
                 onChange={handleChange}
                 className="form-input"
@@ -191,56 +205,58 @@ const Signup = () => {
             </div>
           </div>
 
-          {/* Password */}
-          <div className="form-group">
-            <label className="form-label">Password * (minimum 8 characters)</label>
-            <div className="password-input-wrapper">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                required
-                minLength="8"
-                placeholder="Create strong password"
-                value={formData.password}
-                onChange={handleChange}
-                className="form-input"
-                style={{ paddingLeft: 36 }}
-              />
-              <Lock
-                size={16}
-                className="text-muted"
-                style={{ position: 'absolute', left: 12, top: 13 }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="password-toggle-btn"
-                aria-label="Toggle password visibility"
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
+          {/* Password & Confirm Password */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div className="form-group">
+              <label className="form-label">Password *</label>
+              <div className="password-input-wrapper">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  required
+                  minLength="8"
+                  placeholder="Min 8 chars"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="form-input"
+                  style={{ paddingLeft: 38 }}
+                />
+                <Lock
+                  size={16}
+                  className="text-muted"
+                  style={{ position: 'absolute', left: 12, top: 13 }}
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Confirm Password */}
-          <div className="form-group">
-            <label className="form-label">Confirm Password *</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name="confirmPassword"
-                required
-                placeholder="Re-enter password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="form-input"
-                style={{ paddingLeft: 36 }}
-              />
-              <Lock
-                size={16}
-                className="text-muted"
-                style={{ position: 'absolute', left: 12, top: 13 }}
-              />
+            <div className="form-group">
+              <label className="form-label">Confirm Password *</label>
+              <div className="password-input-wrapper">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="confirmPassword"
+                  required
+                  minLength="8"
+                  placeholder="Re-type password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="form-input"
+                  style={{ paddingLeft: 38 }}
+                />
+                <Lock
+                  size={16}
+                  className="text-muted"
+                  style={{ position: 'absolute', left: 12, top: 13 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="password-toggle-btn"
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -251,17 +267,35 @@ const Signup = () => {
             style={{ width: '100%', marginTop: 8, justifyContent: 'center' }}
           >
             <UserPlus size={16} />
-            <span>{loading ? 'Sending OTP...' : 'Sign Up & Verify Email'}</span>
+            <span>{loading ? 'Creating Account...' : 'Create Account & Verify OTP'}</span>
           </button>
         </form>
 
+        {/* Footer Navigation */}
         <div className="auth-footer">
-          <p style={{ fontSize: 14 }}>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>
             Already have an account?{' '}
-            <Link to="/login" className="text-red" style={{ fontWeight: 600 }}>
-              Log in
+            <Link to="/login" className="text-red" style={{ fontWeight: 700 }}>
+              Sign in
             </Link>
           </p>
+
+          <div
+            style={{
+              marginTop: 18,
+              paddingTop: 14,
+              borderTop: '1px solid var(--border-light)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              fontSize: '0.78rem',
+              color: 'var(--text-muted)',
+            }}
+          >
+            <ShieldCheck size={14} className="text-success" />
+            <span>Instant email verification for secure peer-to-peer trust</span>
+          </div>
         </div>
       </div>
     </div>
