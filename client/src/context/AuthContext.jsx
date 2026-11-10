@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext(null);
 
@@ -13,7 +14,7 @@ export const AuthProvider = ({ children }) => {
       return null;
     }
   });
-  const [loading, setLoading] = useState(false);
+  const loading = false;
 
   const isSuperAdmin = Boolean(adminToken);
 

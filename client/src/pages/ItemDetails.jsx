@@ -25,7 +25,6 @@ import {
   Layers,
   Award,
   Check,
-  HelpCircle,
 } from 'lucide-react';
 
 /**

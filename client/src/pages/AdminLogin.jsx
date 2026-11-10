@@ -9,7 +9,6 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
-  ArrowRight,
 } from 'lucide-react';
 
 /**

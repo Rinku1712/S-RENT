@@ -1,11 +1,14 @@
 const nodemailer = require('nodemailer');
 
 const getTransporter = () => {
+  const user = process.env.EMAIL_USER ? process.env.EMAIL_USER.trim() : '';
+  const pass = process.env.EMAIL_PASS ? process.env.EMAIL_PASS.trim() : '';
+
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      user,
+      pass,
     },
   });
 };
@@ -13,10 +16,11 @@ const getTransporter = () => {
 // Function to send OTP email
 const sendOTPEmail = async (email, otp) => {
   try {
+    const user = process.env.EMAIL_USER ? process.env.EMAIL_USER.trim() : '';
     const transporter = getTransporter();
 
     await transporter.sendMail({
-      from: `"SRENT" <${process.env.EMAIL_USER}>`,
+      from: `"SRENT" <${user}>`,
       to: email,
       subject: 'Email Verification OTP - SRENT',
       html: `

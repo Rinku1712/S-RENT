@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { getAllItems, searchItems } from '../services/itemService';
 import { getCategories } from '../services/categoryService';
 import ItemCard from '../components/ItemCard';
@@ -9,12 +9,8 @@ import {
   RotateCcw,
   Package,
   MapPin,
-  Tag,
   ArrowUpDown,
   X,
-  Check,
-  ShieldCheck,
-  Sparkles,
 } from 'lucide-react';
 
 /**
@@ -246,7 +242,7 @@ const Browse = () => {
           {/* ========================================================
               LEFT SIDEBAR: OLX-INSPIRED MULTI-FILTER PANEL
               ======================================================== */}
-          <aside className="filter-sidebar">
+          <aside className={`filter-sidebar ${mobileFilterOpen ? 'open' : ''}`}>
             <div className="filter-header">
               <h3>
                 <SlidersHorizontal size={18} className="text-red" />

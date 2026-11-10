@@ -12,14 +12,11 @@ import {
   CheckCircle2,
   AlertCircle,
   ArrowLeft,
-  Info,
   Upload,
   X,
   Camera,
   ShieldCheck,
   TrendingUp,
-  HelpCircle,
-  Sparkles,
 } from 'lucide-react';
 
 /**

@@ -10,7 +10,6 @@ import {
   EyeOff,
   AlertCircle,
   ShieldCheck,
-  CheckCircle2,
 } from 'lucide-react';
 
 /**

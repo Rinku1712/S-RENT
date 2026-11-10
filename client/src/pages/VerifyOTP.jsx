@@ -7,8 +7,6 @@ import {
   RotateCcw,
   CheckCircle2,
   AlertCircle,
-  ArrowRight,
-  ShieldCheck,
 } from 'lucide-react';
 
 /**

@@ -15,9 +15,6 @@ import {
   Layers,
   Heart,
   User,
-  Inbox,
-  ShoppingBag,
-  Sparkles,
 } from 'lucide-react';
 
 /**
@@ -31,7 +28,7 @@ import {
  * - Mobile responsive drawer
  */
 const Navbar = () => {
-  const { user, isSuperAdmin, isAuthenticated, isUser, logout } = useAuth();
+  const { user, isSuperAdmin, isAuthenticated, logout } = useAuth();
   const { wishlistCount } = useWishlist();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Lock, CheckCircle2, Heart } from 'lucide-react';
+import { ShieldCheck, CheckCircle2 } from 'lucide-react';
 
 /**
  * Footer Component (Startup-Grade Marketplace Footer)

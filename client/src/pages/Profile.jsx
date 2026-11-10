@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { getUserProfile } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 import {
-  User,
   ShieldCheck,
   Mail,
   Phone,
@@ -13,7 +12,6 @@ import {
   ArrowLeft,
   AlertCircle,
   LayoutDashboard,
-  CheckCircle2,
 } from 'lucide-react';
 
 /**
@@ -21,7 +19,7 @@ import {
  * URL: /profile
  */
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

@@ -40,8 +40,6 @@ import {
   Heart,
   Calendar,
   MapPin,
-  Tag,
-  Check,
 } from 'lucide-react';
 
 /**
@@ -184,6 +182,7 @@ const UserDashboard = () => {
     } else if (activeTab === 'profile') {
       fetchProfile();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   // Handle Owner Approving a Rental Request

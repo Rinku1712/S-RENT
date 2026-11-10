@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getAdminDashboard } from '../services/dashboardService';
 import {
-  Shield,
   Users,
   Package,
   Layers,
@@ -10,10 +9,6 @@ import {
   RefreshCw,
   ArrowRight,
   AlertCircle,
-  CheckCircle2,
-  Clock,
-  XCircle,
-  PauseCircle,
 } from 'lucide-react';
 
 /**

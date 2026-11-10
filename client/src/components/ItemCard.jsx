@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, ShieldCheck, ArrowRight, Package, Heart, Sparkles } from 'lucide-react';
+import { MapPin, ShieldCheck, ArrowRight, Package, Heart } from 'lucide-react';
 import getItemImageUrl from '../utils/itemImageUrl';
 import { useWishlist } from '../context/WishlistContext';
 
