@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { verifyOTP, resendOTP } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 import {
   MailCheck,
   Clock,
@@ -30,6 +31,13 @@ const VerifyOTP = () => {
   const [resendCooldown, setResendCooldown] = useState(30);
 
   const navigate = useNavigate();
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(isSuperAdmin ? '/admin/dashboard' : '/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, isSuperAdmin, navigate]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -39,6 +47,10 @@ const VerifyOTP = () => {
 
     return () => clearInterval(timer);
   }, []);
+
+  if (isAuthenticated) {
+    return null;
+  }
 
   const formatTimer = (secs) => {
     const m = Math.floor(secs / 60);

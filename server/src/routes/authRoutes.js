@@ -9,4 +9,6 @@ router.post('/signup', validate(signupSchema), authControllers.signup);
 router.post('/login', validate(loginSchema), authControllers.login);
 router.post('/verify-otp', authControllers.verifyOTP);
 router.post('/resend-otp', authControllers.resendOTP);
+router.post('/forgot-password', authControllers.forgotPassword);
+router.post('/reset-password', authControllers.resetPassword);
 module.exports = router;

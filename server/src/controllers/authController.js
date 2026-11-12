@@ -56,4 +56,37 @@ const resendOTP = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, verifyOTP, resendOTP };
+const forgotPassword = async (req, res) => {
+  try {
+    const result = await authServices.forgotPassword(req.body);
+    res.status(200).json({
+      success: true,
+      message: result.message,
+      email: result.email,
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Error initiating password reset',
+      error: error.message,
+    });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const result = await authServices.resetPassword(req.body);
+    res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Error resetting password',
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { signup, login, verifyOTP, resendOTP, forgotPassword, resetPassword };

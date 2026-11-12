@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { login } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
@@ -20,13 +20,24 @@ import BrandLogo from '../components/BrandLogo';
 const Login = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { loginUser } = useAuth();
+  const { loginUser, isAuthenticated, isSuperAdmin } = useAuth();
 
   const [email, setEmail] = useState(location.state?.verifiedEmail || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const destination = location.state?.from || (isSuperAdmin ? '/admin/dashboard' : '/dashboard');
+      navigate(destination, { replace: true });
+    }
+  }, [isAuthenticated, isSuperAdmin, location.state?.from, navigate]);
+
+  if (isAuthenticated) {
+    return null;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -108,7 +119,17 @@ const Login = () => {
 
           {/* Password */}
           <div className="form-group">
-            <label className="form-label">Password</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <label className="form-label" style={{ marginBottom: 0 }}>Password</label>
+              <Link
+                to="/forgot-password"
+                state={{ email }}
+                className="text-red"
+                style={{ fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none' }}
+              >
+                Forgot Password?
+              </Link>
+            </div>
             <div className="password-input-wrapper">
               <input
                 type={showPassword ? 'text' : 'password'}

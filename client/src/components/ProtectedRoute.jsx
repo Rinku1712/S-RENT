@@ -38,3 +38,21 @@ export const AdminRoute = ({ children }) => {
 
   return children;
 };
+
+export const GuestRoute = ({ children }) => {
+  const { isAuthenticated, isSuperAdmin, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="container" style={{ padding: '60px 20px', textAlign: 'center' }}>
+        <div className="spinner"></div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to={isSuperAdmin ? '/admin/dashboard' : '/dashboard'} replace />;
+  }
+
+  return children;
+};

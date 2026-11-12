@@ -4,12 +4,18 @@ import { createContext, useContext, useState } from 'react';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(() => localStorage.getItem('token') || null);
-  const [adminToken, setAdminToken] = useState(() => localStorage.getItem('adminToken') || null);
+  const [token, setToken] = useState(() => {
+    const raw = localStorage.getItem('token');
+    return raw && raw !== 'null' && raw !== 'undefined' ? raw : null;
+  });
+  const [adminToken, setAdminToken] = useState(() => {
+    const raw = localStorage.getItem('adminToken');
+    return raw && raw !== 'null' && raw !== 'undefined' ? raw : null;
+  });
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('user');
-      return saved ? JSON.parse(saved) : null;
+      return saved && saved !== 'null' && saved !== 'undefined' ? JSON.parse(saved) : null;
     } catch {
       return null;
     }

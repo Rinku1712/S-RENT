@@ -20,6 +20,16 @@ export const resendOTP = async (emailData) => {
   return response.data;
 };
 
+export const forgotPassword = async (emailData) => {
+  const response = await api.post('/auth/forgot-password', emailData);
+  return response.data;
+};
+
+export const resetPassword = async (resetData) => {
+  const response = await api.post('/auth/reset-password', resetData);
+  return response.data;
+};
+
 export const adminLogin = async (credentials) => {
   const response = await api.post('/api/admin/login', credentials);
   return response.data;

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signup } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 import {
   UserPlus,
   User,
@@ -36,6 +37,17 @@ const Signup = () => {
   const [error, setError] = useState(null);
 
   const navigate = useNavigate();
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(isSuperAdmin ? '/admin/dashboard' : '/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, isSuperAdmin, navigate]);
+
+  if (isAuthenticated) {
+    return null;
+  }
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

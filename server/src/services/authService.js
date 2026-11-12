@@ -2,7 +2,7 @@ const User = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const generateToken = require('../utils/generateToken');
-const { sendOTPEmail } = require('./emailServices');
+const { sendOTPEmail, sendPasswordResetEmail } = require('./emailServices');
 
 // Signup function
 const signup = async (value) => {
@@ -238,4 +238,110 @@ const resendOTP = async (value) => {
   };
 };
 
-module.exports = { signup, login, verifyOTP, resendOTP };
+// Forgot Password: Send 6-digit reset code to user's registered email
+const forgotPassword = async (value) => {
+  if (!value.email) {
+    const err = new Error('Email address is required');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const normalizedEmail = value.email.toLowerCase().trim();
+  const user = await User.findOne({ email: normalizedEmail });
+
+  if (!user) {
+    const err = new Error('No account found with this email address');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  if (user.accountStatus !== 'active') {
+    const err = new Error('Your account is currently suspended or blocked. Please contact support.');
+    err.statusCode = 403;
+    throw err;
+  }
+
+  // Generate 6-digit reset OTP
+  const otp = crypto.randomInt(100000, 1000000).toString();
+  const hashedOTP = await bcrypt.hash(otp, 10);
+  const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  user.resetPasswordOTP = hashedOTP;
+  user.resetPasswordOTPExpiry = expiry;
+  user.resetPasswordAttempts = 0;
+  await user.save();
+
+  await sendPasswordResetEmail(user.email, otp);
+
+  return {
+    message: 'A password reset verification code has been sent to your email.',
+    email: user.email,
+  };
+};
+
+// Reset Password: Validate OTP and update password
+const resetPassword = async (value) => {
+  const { email, otp, newPassword } = value;
+
+  if (!email || !otp || !newPassword) {
+    const err = new Error('Email, verification code, and new password are required');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  if (String(newPassword).length < 8) {
+    const err = new Error('New password must be at least 8 characters long');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+  const user = await User.findOne({ email: normalizedEmail }).select('+resetPasswordOTP');
+
+  if (!user) {
+    const err = new Error('User not found');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  if (!user.resetPasswordOTP) {
+    const err = new Error('No password reset request found. Please request a new code.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  if (user.resetPasswordAttempts >= 5) {
+    const err = new Error('Maximum verification attempts reached. Please request a fresh reset code.');
+    err.statusCode = 429;
+    throw err;
+  }
+
+  if (user.resetPasswordOTPExpiry && user.resetPasswordOTPExpiry < new Date()) {
+    const err = new Error('Password reset code has expired. Please request a new code.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const isOTPMatch = await bcrypt.compare(String(otp).trim(), user.resetPasswordOTP);
+  if (!isOTPMatch) {
+    user.resetPasswordAttempts += 1;
+    await user.save();
+    const err = new Error('Invalid verification code. Please check and try again.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Update password and clear reset fields
+  user.passwordHash = await bcrypt.hash(newPassword, 10);
+  user.resetPasswordOTP = null;
+  user.resetPasswordOTPExpiry = null;
+  user.resetPasswordAttempts = 0;
+  user.isEmailVerified = true;
+  await user.save();
+
+  return {
+    message: 'Password has been reset successfully. You can now log in with your new password.',
+  };
+};
+
+module.exports = { signup, login, verifyOTP, resendOTP, forgotPassword, resetPassword };

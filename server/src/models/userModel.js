@@ -78,6 +78,23 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
+    // Fields for Forgot Password / Reset Password OTP
+    resetPasswordOTP: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
+    resetPasswordOTPExpiry: {
+      type: Date,
+      default: null,
+    },
+
+    resetPasswordAttempts: {
+      type: Number,
+      default: 0,
+    },
+
     accountStatus: {
       type: String,
       enum: ['active', 'suspended', 'blocked'],
