@@ -233,14 +233,15 @@ const UserDashboard = () => {
 
   // Handle Item Image Update
   const handleUpdateImages = async (itemId, files) => {
-    if (files.length === 0) return;
+    const fileArray = Array.from(files || []);
+    if (fileArray.length === 0) return;
 
-    if (files.length > 10 || files.some((file) => !isSupportedImage(file))) {
+    if (fileArray.length > 10 || fileArray.some((file) => !isSupportedImage(file))) {
       setActionError(`Choose up to 10 images in these formats: ${supportedImageFormats}.`);
       return;
     }
 
-    if (files.some((file) => !isImageWithinSizeLimit(file))) {
+    if (fileArray.some((file) => !isImageWithinSizeLimit(file))) {
       setActionError('Each image must be 5 MB or smaller.');
       return;
     }
@@ -251,7 +252,7 @@ const UserDashboard = () => {
       setImageUploadItemId(itemId);
       setActionMessage(null);
       setActionError(null);
-      const result = await updateItemImages(itemId, files);
+      const result = await updateItemImages(itemId, fileArray);
 
       if (result.success) {
         setActionMessage('Listing images updated successfully.');

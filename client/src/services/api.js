@@ -8,9 +8,14 @@ const api = axios.create({
   },
 });
 
-// Interceptor to automatically attach JWT token
+// Interceptor to automatically attach JWT token & handle FormData
 api.interceptors.request.use(
   (config) => {
+    // If request payload is FormData, remove Content-Type header so browser computes multipart boundary
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+
     // If requesting admin route or category management, prefer adminToken
     const isAdminUrl =
       config.url?.includes('/admin') ||

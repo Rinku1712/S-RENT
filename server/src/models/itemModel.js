@@ -49,7 +49,7 @@ const itemSchema = new mongoose.Schema(
     images: {
       type: [String],
       validate: {
-        validator: (images) => images.length <= 5,
+        validator: (images) => images.length <= 10,
         message: 'Maximum 10 images are allowed',
       },
       default: [],

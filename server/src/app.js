@@ -19,10 +19,7 @@ app.use(
   '/uploads',
   (req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader(
-      'Content-Security-Policy',
-      "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:",
-    );
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     next();
   },
   express.static(path.join(__dirname, 'uploads')),

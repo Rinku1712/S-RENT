@@ -1,7 +1,16 @@
-const fs = require('fs').promises;
+const fs = require('fs');
+const fsPromises = fs.promises;
 const path = require('path');
 
 const uploadDirectory = path.resolve(__dirname, '../uploads/items');
+
+// Ensure upload directory exists synchronously on startup
+try {
+  fs.mkdirSync(uploadDirectory, { recursive: true });
+} catch (err) {
+  console.error('Failed to create upload directory:', err);
+}
+
 const storedImagePattern = /^\/?uploads\/items\/([A-Za-z0-9][A-Za-z0-9._-]*)$/;
 
 const getStoredImagePath = (filename) => `uploads/items/${filename}`;
@@ -14,7 +23,7 @@ const removeFile = async (filePath) => {
   }
 
   try {
-    await fs.unlink(resolvedPath);
+    await fsPromises.unlink(resolvedPath);
   } catch (error) {
     if (error.code !== 'ENOENT') {
       throw error;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { createItem } from '../services/itemService';
 import { getCategories } from '../services/categoryService';
@@ -17,24 +17,27 @@ import {
   Camera,
   ShieldCheck,
   TrendingUp,
+  ImagePlus,
 } from 'lucide-react';
 
 /**
- * Premium S-RENT Listing Creation Page
- * Matches OLX / Amazon seller experience:
- * - Structured multi-card form layout
- * - Interactive multi-image upload with live image previews & remove button
- * - Security deposit calculator & renter protection tips
- * - Right sidebar with owner earnings potential & photography checklist
- * - Zero emojis, 100% Lucide React icons
+ * Premium S-RENT Listing Creation Page (OLX / Amazon Standard)
+ * Features:
+ * - Full responsive layout for mobile, tablet, and desktop
+ * - Modern Drag-and-Drop file uploader + mobile camera/gallery picker via Multer
+ * - Interactive multi-image previews with Primary Cover Photo indicator and remove button
+ * - Security deposit guidelines & renter protection information
+ * - Responsive Owner Earnings Estimator & photography checklist sidebar
  */
 const CreateItem = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -85,8 +88,8 @@ const CreateItem = () => {
     }));
   };
 
-  const handleImageFilesChange = (e) => {
-    const files = Array.from(e.target.files || []);
+  const processSelectedFiles = (selectedFiles) => {
+    const files = Array.from(selectedFiles || []);
     if (!files.length) return;
 
     if (imageFiles.length + files.length > 10) {
@@ -96,7 +99,7 @@ const CreateItem = () => {
 
     for (const f of files) {
       if (!isSupportedImage(f)) {
-        setError(`Supported formats: ${supportedImageFormats}.`);
+        setError(`Supported image formats: ${supportedImageFormats}.`);
         return;
       }
       if (!isImageWithinSizeLimit(f)) {
@@ -105,12 +108,40 @@ const CreateItem = () => {
       }
     }
 
+    setError(null);
     const newFiles = [...imageFiles, ...files];
     setImageFiles(newFiles);
 
     // Generate local previews
     const newPreviews = files.map((file) => URL.createObjectURL(file));
     setImagePreviews((prev) => [...prev, ...newPreviews]);
+  };
+
+  const handleImageFilesChange = (e) => {
+    processSelectedFiles(e.target.files);
+    // Reset file input value so selecting the same file again triggers change
+    if (e.target) e.target.value = '';
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer && e.dataTransfer.files) {
+      processSelectedFiles(e.dataTransfer.files);
+    }
   };
 
   const removeImageAt = (index) => {
@@ -208,8 +239,8 @@ const CreateItem = () => {
   const monthlyEstimate = dailyNum * 8; // approx 8 days rented per month
 
   return (
-    <div className="container" style={{ padding: '36px 20px 72px', maxWidth: 1120 }}>
-      {/* Top Header */}
+    <div className="container create-item-page">
+      {/* Top Header Breadcrumb & Title */}
       <div style={{ marginBottom: 28 }}>
         <Link
           to="/dashboard"
@@ -233,14 +264,7 @@ const CreateItem = () => {
         </p>
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.8fr) minmax(300px, 1.1fr)',
-          gap: 32,
-          alignItems: 'start',
-        }}
-      >
+      <div className="create-item-layout">
         {/* LEFT COLUMN: Main Multi-Section Form */}
         <div>
           {error && (
@@ -259,7 +283,7 @@ const CreateItem = () => {
 
           <form onSubmit={handleSubmit}>
             {/* Card 1: General Details */}
-            <div className="card" style={{ padding: 28, marginBottom: 24 }}>
+            <div className="card" style={{ padding: 24, marginBottom: 24 }}>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0 0 18px', paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
                 1. General Equipment Information
               </h3>
@@ -281,7 +305,7 @@ const CreateItem = () => {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-row-2">
                 <div className="form-group">
                   <label className="form-label">Category *</label>
                   <select
@@ -329,7 +353,7 @@ const CreateItem = () => {
                 </select>
               </div>
 
-              <div className="form-group">
+              <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Detailed Description *</label>
                 <textarea
                   name="description"
@@ -343,114 +367,86 @@ const CreateItem = () => {
               </div>
             </div>
 
-            {/* Card 2: Photos & Media */}
-            <div className="card" style={{ padding: 28, marginBottom: 24 }}>
+            {/* Card 2: Photos & Media (Multer Drag & Drop Uploader) */}
+            <div className="card" style={{ padding: 24, marginBottom: 24 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
-                  2. Photos & Media
-                </h3>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
+                    2. Photos & Media
+                  </h3>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    Upload clear photos from your camera or gallery
+                  </span>
+                </div>
+                <span className="badge badge-neutral">
                   {imagePreviews.length} / 10 photos
                 </span>
               </div>
 
               {/* Upload Dropzone */}
               <div
-                style={{
-                  border: '2px dashed var(--border)',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: '24px 20px',
-                  textAlign: 'center',
-                  background: 'var(--bg-subtle)',
-                  cursor: 'pointer',
-                  marginBottom: 16,
-                }}
+                className={`upload-dropzone ${isDragging ? 'dragging' : ''}`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current && fileInputRef.current.click()}
               >
                 <input
                   type="file"
+                  ref={fileInputRef}
                   id="imageFileInput"
                   name="images"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/jpg"
                   multiple
                   onChange={handleImageFilesChange}
                   style={{ display: 'none' }}
                 />
-                <label htmlFor="imageFileInput" style={{ cursor: 'pointer', display: 'block' }}>
-                  <div
-                    style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '50%',
-                      background: 'var(--white)',
-                      boxShadow: 'var(--shadow-sm)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto 10px',
-                      color: 'var(--primary)',
-                    }}
-                  >
-                    <Upload size={22} />
-                  </div>
-                  <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)', display: 'block' }}>
-                    Click to browse and upload photos
-                  </strong>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>
-                    PNG, JPG, WEBP, AVIF up to 5 MB per photo (Max 10 photos)
-                  </span>
-                </label>
+                <div className="upload-icon-circle">
+                  <Upload size={22} />
+                </div>
+                <strong className="upload-dropzone-title">
+                  {isDragging ? 'Drop images here now' : 'Click or drag & drop photos here'}
+                </strong>
+                <span className="upload-dropzone-hint">
+                  JPG, PNG, WEBP up to 5 MB each • First photo serves as primary listing cover
+                </span>
               </div>
 
               {/* Image Previews Grid */}
               {imagePreviews.length > 0 && (
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
-                    gap: 12,
-                    marginBottom: 16,
-                  }}
-                >
+                <div className="image-preview-grid">
                   {imagePreviews.map((src, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        position: 'relative',
-                        aspectRatio: '1',
-                        borderRadius: 'var(--radius-md)',
-                        overflow: 'hidden',
-                        border: '1px solid var(--border)',
-                      }}
-                    >
-                      <img
-                        src={src}
-                        alt={`Preview ${idx + 1}`}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
+                    <div key={idx} className="image-preview-box">
+                      <img src={src} alt={`Preview ${idx + 1}`} />
+                      {idx === 0 && (
+                        <div className="preview-cover-badge">
+                          Cover Photo
+                        </div>
+                      )}
                       <button
                         type="button"
-                        onClick={() => removeImageAt(idx)}
-                        style={{
-                          position: 'absolute',
-                          top: 4,
-                          right: 4,
-                          background: 'rgba(0, 0, 0, 0.65)',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '50%',
-                          width: 22,
-                          height: 22,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeImageAt(idx);
                         }}
+                        className="preview-remove-btn"
                         title="Remove photo"
                       >
                         <X size={12} />
                       </button>
                     </div>
                   ))}
+
+                  {/* Add more button chip inside the grid if under 10 */}
+                  {imagePreviews.length < 10 && (
+                    <div
+                      className="upload-add-more-card"
+                      onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                    >
+                      <ImagePlus size={18} />
+                      <span>+ Add More</span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -468,12 +464,12 @@ const CreateItem = () => {
             </div>
 
             {/* Card 3: Rental Rates & Security Deposit */}
-            <div className="card" style={{ padding: 28, marginBottom: 24 }}>
+            <div className="card" style={{ padding: 24, marginBottom: 24 }}>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0 0 18px', paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
                 3. Rental Pricing & Security Deposit
               </h3>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+              <div className="form-row-3">
                 <div className="form-group">
                   <label className="form-label">Rent Per Day (₹) *</label>
                   <input
@@ -520,7 +516,7 @@ const CreateItem = () => {
                 style={{
                   display: 'flex',
                   alignItems: 'flex-start',
-                  gap: 8,
+                  gap: 10,
                   padding: 12,
                   background: 'var(--bg-subtle)',
                   borderRadius: 'var(--radius-md)',
@@ -528,7 +524,7 @@ const CreateItem = () => {
                   color: 'var(--text-secondary)',
                 }}
               >
-                <ShieldCheck size={16} className="text-red" style={{ flexShrink: 0, marginTop: 1 }} />
+                <ShieldCheck size={18} className="text-red" style={{ flexShrink: 0, marginTop: 1 }} />
                 <span>
                   The security deposit protects your equipment against potential damage or delay. It is retained until the gear is returned and verified in person.
                 </span>
@@ -536,12 +532,12 @@ const CreateItem = () => {
             </div>
 
             {/* Card 4: Pickup Location */}
-            <div className="card" style={{ padding: 28, marginBottom: 28 }}>
+            <div className="card" style={{ padding: 24, marginBottom: 28 }}>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0 0 18px', paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
                 4. Handover & Pickup Location
               </h3>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+              <div className="form-row-3">
                 <div className="form-group">
                   <label className="form-label">City *</label>
                   <input
@@ -583,7 +579,7 @@ const CreateItem = () => {
             </div>
 
             {/* Form Actions */}
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+            <div className="form-actions-bar">
               <button
                 type="button"
                 onClick={() => navigate('/dashboard')}
@@ -604,9 +600,9 @@ const CreateItem = () => {
         </div>
 
         {/* RIGHT COLUMN: Owner Tips & Potential Earnings Calculator */}
-        <div>
+        <div className="create-item-sidebar">
           {/* Earnings Estimator */}
-          <div className="card" style={{ padding: 24, marginBottom: 20 }}>
+          <div className="card" style={{ padding: 24 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
               <TrendingUp size={20} className="text-red" />
               <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: 0 }}>
@@ -640,7 +636,7 @@ const CreateItem = () => {
           </div>
 
           {/* Listing Quality Checklist */}
-          <div className="card" style={{ padding: 24, marginBottom: 20 }}>
+          <div className="card" style={{ padding: 24 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
               <Camera size={20} className="text-red" />
               <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: 0 }}>

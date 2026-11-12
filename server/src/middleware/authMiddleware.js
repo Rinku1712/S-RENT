@@ -26,6 +26,17 @@ const authmiddleware = async (req, res, next) => {
   }
 
   try {
+    if (decoded.isSuperAdmin) {
+      req.user = {
+        _id: '000000000000000000000000',
+        name: process.env.ADMIN_NAME || 'Super Admin',
+        email: process.env.SUPER_ADMIN_EMAIL || 'admin@srent.com',
+        role: 'superAdmin',
+        accountStatus: 'active',
+      };
+      return next();
+    }
+
     const authenticatedUser = await User.findById(decoded.id);
 
     // A valid token should not grant access to deleted or inactive accounts.
