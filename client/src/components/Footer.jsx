@@ -15,7 +15,7 @@ const Footer = () => {
     <footer className="footer-wrapper">
       <div className="container">
         <div className="footer-grid">
-          {/* Col 1: SRENT Brand & Tagline */}
+          {/* Col 1: S-RENT Brand & Tagline */}
           <div className="footer-col">
             <div style={{ marginBottom: 14 }}>
               <BrandLogo size="md" variant="full" />
@@ -111,7 +111,7 @@ const Footer = () => {
 
         {/* Bottom Bar */}
         <div className="footer-bottom">
-          <p>© {new Date().getFullYear()} SRENT Marketplace. All rights reserved. Built for smart renters across India.</p>
+          <p>© {new Date().getFullYear()} S-RENT Marketplace. All rights reserved. Built for smart renters across India.</p>
           <div className="footer-legal-links">
             <span style={{ cursor: 'pointer' }}>Privacy Policy</span>
             <span>•</span>

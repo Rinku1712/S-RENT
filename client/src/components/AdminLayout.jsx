@@ -205,7 +205,7 @@ const AdminLayout = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', color: '#64748B' }}>
                 <span>Admin Console</span>
                 <span>/</span>
-                <span style={{ color: '#E53935', fontWeight: 600 }}>{getPageTitle()}</span>
+                <span style={{ color: '#E93636', fontWeight: 600 }}>{getPageTitle()}</span>
               </div>
               <h1 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '2px 0 0', color: '#0F172A' }}>
                 {getPageTitle()}
@@ -324,7 +324,7 @@ const AdminLayout = () => {
                         gap: 10,
                         padding: '8px 12px',
                         fontSize: '0.84rem',
-                        color: '#E53935',
+                        color: '#E93636',
                         background: 'transparent',
                         border: 'none',
                         borderRadius: 6,

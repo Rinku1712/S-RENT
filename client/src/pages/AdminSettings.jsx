@@ -105,7 +105,7 @@ const AdminSettings = () => {
                   height: 56,
                   borderRadius: '50%',
                   background: '#FEE2E2',
-                  color: '#E53935',
+                  color: '#E93636',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

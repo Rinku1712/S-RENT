@@ -56,7 +56,7 @@ const AdminDashboard = () => {
         className="admin-card"
         style={{
           marginBottom: 24,
-          borderLeft: '4px solid #E53935',
+          borderLeft: '4px solid #E93636',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -111,7 +111,7 @@ const AdminDashboard = () => {
           {/* Key Metric Overview Cards */}
           <div className="metrics-grid">
             <div className="metric-card">
-              <div className="metric-icon-box" style={{ background: '#FEE2E2', color: '#E53935' }}>
+              <div className="metric-icon-box" style={{ background: '#FEE2E2', color: '#E93636' }}>
                 <Users size={22} />
               </div>
               <div>
@@ -180,7 +180,7 @@ const AdminDashboard = () => {
                   <Package size={17} className="text-red" />
                   <span>Catalog Inventory</span>
                 </h3>
-                <Link to="/admin/items" style={{ fontSize: '0.8rem', color: '#E53935', fontWeight: 600 }}>
+                <Link to="/admin/items" style={{ fontSize: '0.8rem', color: '#E93636', fontWeight: 600 }}>
                   Manage &rarr;
                 </Link>
               </div>
@@ -212,7 +212,7 @@ const AdminDashboard = () => {
                   <ShoppingBag size={17} className="text-red" />
                   <span>Rental Fulfillment</span>
                 </h3>
-                <Link to="/admin/rentals" style={{ fontSize: '0.8rem', color: '#E53935', fontWeight: 600 }}>
+                <Link to="/admin/rentals" style={{ fontSize: '0.8rem', color: '#E93636', fontWeight: 600 }}>
                   Manage &rarr;
                 </Link>
               </div>

@@ -11,6 +11,9 @@ import {
   MapPin,
   ArrowUpDown,
   X,
+  LayoutGrid,
+  List,
+  Layers,
 } from 'lucide-react';
 
 /**
@@ -37,6 +40,9 @@ const Browse = () => {
 
   // Sorting: 'recent' | 'price_asc' | 'price_desc'
   const [sortBy, setSortBy] = useState('recent');
+
+  // Display mode: 'grid' | 'list'
+  const [viewMode, setViewMode] = useState('grid');
 
   // Filter form states initialized from URL parameters
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
@@ -232,6 +238,35 @@ const Browse = () => {
             <SlidersHorizontal size={14} />
             <span>Filters {activeFilterList.length > 0 ? `(${activeFilterList.length})` : ''}</span>
           </button>
+        </div>
+
+        {/* Top Horizontal Category Pills Strip (Rentit4me Discovery Standard) */}
+        <div className="browse-category-strip">
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedCategory('');
+              applyFilters({ category: '' });
+            }}
+            className={`category-pill-btn ${selectedCategory === '' ? 'active' : ''}`}
+          >
+            <Layers size={14} />
+            <span>All Categories</span>
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat._id}
+              type="button"
+              onClick={() => {
+                const next = selectedCategory === cat.name ? '' : cat.name;
+                setSelectedCategory(next);
+                applyFilters({ category: next });
+              }}
+              className={`category-pill-btn ${selectedCategory === cat.name ? 'active' : ''}`}
+            >
+              <span>{cat.name}</span>
+            </button>
+          ))}
         </div>
 
         {/* Alternative item recommendation notice from backend search */}
@@ -474,18 +509,39 @@ const Browse = () => {
                 Showing <strong>{sortedItems.length}</strong> available rental items
               </div>
 
-              <div className="browse-sort-group">
-                <ArrowUpDown size={15} className="text-muted" />
-                <span style={{ color: 'var(--text-secondary)' }}>Sort by:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="browse-sort-select"
-                >
-                  <option value="recent">Recently Listed</option>
-                  <option value="price_asc">Price: Low to High</option>
-                  <option value="price_desc">Price: High to Low</option>
-                </select>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div className="browse-sort-group">
+                  <ArrowUpDown size={15} className="text-muted" />
+                  <span style={{ color: 'var(--text-secondary)' }}>Sort by:</span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="browse-sort-select"
+                  >
+                    <option value="recent">Recently Listed</option>
+                    <option value="price_asc">Price: Low to High</option>
+                    <option value="price_desc">Price: High to Low</option>
+                  </select>
+                </div>
+
+                <div className="view-mode-toggle" aria-label="Layout View Toggle">
+                  <button
+                    type="button"
+                    className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                    onClick={() => setViewMode('grid')}
+                    title="Grid View"
+                  >
+                    <LayoutGrid size={15} />
+                  </button>
+                  <button
+                    type="button"
+                    className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                    onClick={() => setViewMode('list')}
+                    title="List View"
+                  >
+                    <List size={15} />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -518,7 +574,7 @@ const Browse = () => {
 
             {/* Results Grid / Skeletons / Empty State */}
             {loading ? (
-              <div className="grid-cards">
+              <div className={`grid-cards ${viewMode === 'list' ? 'view-list' : ''}`}>
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
                   <div key={n} className="skeleton skeleton-card"></div>
                 ))}
@@ -526,7 +582,7 @@ const Browse = () => {
             ) : error ? (
               <div className="alert alert-danger">{error}</div>
             ) : sortedItems.length > 0 ? (
-              <div className="grid-cards">
+              <div className={`grid-cards ${viewMode === 'list' ? 'view-list' : ''}`}>
                 {sortedItems.map((item) => (
                   <ItemCard key={item._id} item={item} />
                 ))}
