@@ -11,6 +11,7 @@ import {
   AlertCircle,
   ShieldCheck,
 } from 'lucide-react';
+import BrandLogo from '../components/BrandLogo';
 
 /**
  * Premium S-RENT Authentication Page
@@ -56,10 +57,10 @@ const Login = () => {
       <div className="auth-card">
         {/* Brand Header */}
         <div className="auth-header">
-          <div className="brand-icon-box" style={{ margin: '0 auto 12px' }}>
-            <span>S</span>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+            <BrandLogo size="lg" variant="compact" />
           </div>
-          <h2>Welcome to S-RENT</h2>
+          <h2>Welcome Back</h2>
           <p>Sign in to manage your rentals, listings, and bookings</p>
         </div>
 

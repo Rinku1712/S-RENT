@@ -13,6 +13,7 @@ import {
   MapPin,
   ShieldCheck,
 } from 'lucide-react';
+import BrandLogo from '../components/BrandLogo';
 
 /**
  * Premium S-RENT User Registration Page
@@ -85,8 +86,8 @@ const Signup = () => {
       <div className="auth-card" style={{ maxWidth: 520 }}>
         {/* Brand Header */}
         <div className="auth-header">
-          <div className="brand-icon-box" style={{ margin: '0 auto 12px' }}>
-            <span>S</span>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+            <BrandLogo size="lg" variant="compact" />
           </div>
           <h2>Join S-RENT</h2>
           <p>Create your verified peer-to-peer rental account</p>

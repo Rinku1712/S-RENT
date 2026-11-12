@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
+import BrandLogo from './BrandLogo';
 import {
   Search,
   LogIn,
@@ -61,18 +62,13 @@ const Navbar = () => {
   return (
     <header className="navbar-wrapper">
       <div className="container nav-container">
-        {/* Left: Minimal SRENT Brand Wordmark */}
-        <Link to="/" className="brand-logo" onClick={() => setMobileMenuOpen(false)}>
-          <div className="brand-icon-box">
-            <span>S</span>
-          </div>
-          <div className="brand-text-block">
-            <span className="brand-title">
-              S<span className="red-accent">RENT</span>
-            </span>
-            <span className="brand-tagline-pill">Sab Rent Par, Saste Rent Par</span>
-          </div>
-        </Link>
+        {/* Left: Official S-RENT Monogram Brand Logo */}
+        <BrandLogo
+          size="md"
+          variant="full"
+          className="brand-logo"
+          onClick={() => setMobileMenuOpen(false)}
+        />
 
         {/* Center-Left: Quick Search Bar */}
         <form onSubmit={handleSearchSubmit} className="navbar-search-bar">

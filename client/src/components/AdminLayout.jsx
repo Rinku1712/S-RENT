@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { NavLink, Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import BrandLogo from './BrandLogo';
 import {
   LayoutDashboard,
   Users,
@@ -84,18 +85,20 @@ const AdminLayout = () => {
           mobileOpen ? 'mobile-open' : ''
         }`}
       >
-        {/* Brand Header */}
+        {/* Brand Header with SR Monogram */}
         <div className="admin-sidebar-header">
-          <Link to="/admin/dashboard" className="admin-brand-block">
-            <div className="admin-brand-icon">
-              <span>S</span>
-            </div>
-            {!collapsed && (
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <span className="admin-brand-title">S-RENT</span>
-                <span className="admin-brand-badge">ADMIN</span>
-              </div>
-            )}
+          <Link
+            to="/admin/dashboard"
+            className="admin-brand-block"
+            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}
+          >
+            <BrandLogo
+              size="sm"
+              variant={collapsed ? 'icon-only' : 'compact'}
+              theme="dark"
+              clickable={false}
+            />
+            {!collapsed && <span className="admin-brand-badge">ADMIN</span>}
           </Link>
 
           {/* Desktop Collapse Toggle */}

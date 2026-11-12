@@ -10,6 +10,7 @@ import {
   EyeOff,
   AlertCircle,
 } from 'lucide-react';
+import BrandLogo from '../components/BrandLogo';
 
 /**
  * SuperAdmin Login Page
@@ -54,11 +55,12 @@ const AdminLogin = () => {
     <div className="auth-page">
       <div className="auth-card" style={{ borderTop: '4px solid var(--primary)' }}>
         <div className="auth-header">
-          <div className="brand-icon-box" style={{ margin: '0 auto 12px' }}>
-            <Shield size={20} />
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+            <BrandLogo size="lg" variant="compact" />
           </div>
-          <span className="badge badge-warning" style={{ marginBottom: 8 }}>
-            Restricted Access
+          <span className="badge badge-warning" style={{ marginBottom: 8, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <Shield size={13} />
+            Restricted Admin Access
           </span>
           <h2>SuperAdmin Portal</h2>
           <p>System configuration & platform management console</p>

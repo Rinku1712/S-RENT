@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ShieldCheck, CheckCircle2 } from 'lucide-react';
+import BrandLogo from './BrandLogo';
 
 /**
  * Footer Component (Startup-Grade Marketplace Footer)
@@ -16,17 +17,9 @@ const Footer = () => {
         <div className="footer-grid">
           {/* Col 1: SRENT Brand & Tagline */}
           <div className="footer-col">
-            <Link to="/" className="brand-logo" style={{ marginBottom: 12 }}>
-              <div className="brand-icon-box">
-                <span>S</span>
-              </div>
-              <div className="brand-text-block">
-                <span className="brand-title">
-                  S<span className="red-accent">RENT</span>
-                </span>
-                <span className="brand-tagline-pill">Sab Rent Par, Saste Rent Par</span>
-              </div>
-            </Link>
+            <div style={{ marginBottom: 14 }}>
+              <BrandLogo size="md" variant="full" />
+            </div>
             <p style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 16 }}>
               India's premier peer-to-peer rental marketplace. Access high-end tech, cameras, appliances, power tools, and vehicles at affordable daily and weekly rates.
             </p>

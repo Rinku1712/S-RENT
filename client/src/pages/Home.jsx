@@ -28,7 +28,7 @@ import {
   Bike,
   Speaker,
 } from 'lucide-react';
-import srentLogo from '../assets/srent-logo.svg';
+import BrandLogo from '../components/BrandLogo';
 
 /**
  * Public Homepage Component (OLX + Amazon + Modern Rental Standard)
@@ -218,27 +218,30 @@ const Home = () => {
               )}
             </div>
 
-            {/* Right Branded Hero Showcase with Official Named Logo */}
+            {/* Right Branded Hero Showcase Card */}
             <div className="hero-visual-col">
               <div className="hero-brand-card">
-                {/* Official Named Logo Header */}
+                {/* Brand Header */}
                 <div className="hero-brand-header">
-                  <img
-                    src={srentLogo}
-                    alt="S-RENT — Sab Rent Par, Saste Rent Par"
-                    className="hero-named-logo"
-                  />
+                  <div className="hero-brand-identity">
+                    <BrandLogo size="md" variant="compact" clickable={false} />
+                  </div>
                   <div className="hero-brand-verified-tag">
+                    <span className="network-live-indicator"></span>
                     <ShieldCheck size={14} />
                     <span>Official Peer Network</span>
                   </div>
                 </div>
 
-                <div className="hero-brand-body">
-                  <p className="hero-brand-mission">
-                    India’s fastest-growing peer rental platform. Access professional gear, cameras, laptops, and tools near you without the burden of buying.
+                {/* Hero Headline & Value Proposition */}
+                <div className="hero-brand-intro">
+                  <h3 className="hero-brand-headline">Own Less. Experience More.</h3>
+                  <p className="hero-brand-subtext">
+                    Rent premium gear, cameras, laptops and everyday essentials from trusted people near you.
                   </p>
+                </div>
 
+                <div className="hero-brand-body">
                   {/* 4 Feature Trust Pillars */}
                   <div className="hero-brand-pillars">
                     <div className="pillar-item">
@@ -247,7 +250,7 @@ const Home = () => {
                       </div>
                       <div className="pillar-content">
                         <strong>100% Refundable</strong>
-                        <span>Safe security deposit</span>
+                        <span>Deposit security</span>
                       </div>
                     </div>
 
@@ -256,8 +259,8 @@ const Home = () => {
                         <ShieldCheck size={16} />
                       </div>
                       <div className="pillar-content">
-                        <strong>OTP Handover</strong>
-                        <span>Secure check-in code</span>
+                        <strong>Secure OTP Handover</strong>
+                        <span>Verified check-in</span>
                       </div>
                     </div>
 
@@ -267,7 +270,7 @@ const Home = () => {
                       </div>
                       <div className="pillar-content">
                         <strong>Save Up To 90%</strong>
-                        <span>Compared to buying</span>
+                        <span>vs Buying retail</span>
                       </div>
                     </div>
 
@@ -276,8 +279,8 @@ const Home = () => {
                         <Clock size={16} />
                       </div>
                       <div className="pillar-content">
-                        <strong>Flexible Duration</strong>
-                        <span>Daily & weekly rentals</span>
+                        <strong>Flexible Rental Duration</strong>
+                        <span>Daily & weekly rates</span>
                       </div>
                     </div>
                   </div>
@@ -287,34 +290,34 @@ const Home = () => {
                     <span className="chips-title">Rent Top Gear:</span>
                     <div className="chips-list">
                       <Link to="/items?search=Camera" className="hero-gear-chip">
-                        <Camera size={13} />
+                        <Camera size={14} />
                         <span>Cameras</span>
                       </Link>
                       <Link to="/items?search=Laptop" className="hero-gear-chip">
-                        <Laptop size={13} />
+                        <Laptop size={14} />
                         <span>Laptops</span>
                       </Link>
                       <Link to="/items?search=PS5" className="hero-gear-chip">
-                        <Gamepad2 size={13} />
+                        <Gamepad2 size={14} />
                         <span>Gaming</span>
                       </Link>
                       <Link to="/items?search=Bike" className="hero-gear-chip">
-                        <Bike size={13} />
+                        <Bike size={14} />
                         <span>Vehicles</span>
                       </Link>
                     </div>
                   </div>
                 </div>
 
-                {/* Bottom Quick-Action CTAs */}
+                {/* Bottom Call-To-Action Buttons */}
                 <div className="hero-brand-actions">
-                  <Link to="/items" className="btn btn-primary btn-sm hero-brand-btn">
+                  <Link to="/items" className="btn btn-primary hero-btn-primary">
                     <span>Browse All Gear</span>
-                    <ArrowRight size={14} />
+                    <ArrowRight size={15} />
                   </Link>
-                  <Link to="/create-item" className="btn btn-secondary btn-sm hero-brand-btn">
-                    <Sparkles size={14} />
-                    <span>List Item & Earn</span>
+                  <Link to="/create-item" className="btn btn-outline hero-btn-outline">
+                    <Sparkles size={15} />
+                    <span>List Your Item & Earn</span>
                   </Link>
                 </div>
               </div>
