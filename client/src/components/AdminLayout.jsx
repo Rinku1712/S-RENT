@@ -102,12 +102,7 @@ const AdminLayout = () => {
           <button
             type="button"
             onClick={() => setCollapsed(!collapsed)}
-            className="btn btn-ghost btn-sm"
-            style={{
-              padding: 6,
-              color: '#94A3B8',
-              display: window.innerWidth > 992 ? 'flex' : 'none',
-            }}
+            className="btn btn-ghost btn-sm admin-desktop-collapse-btn"
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -196,8 +191,7 @@ const AdminLayout = () => {
             <button
               type="button"
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="btn btn-secondary btn-sm"
-              style={{ display: 'flex', alignItems: 'center', padding: '6px 10px' }}
+              className="btn btn-secondary btn-sm admin-mobile-toggle-btn"
               aria-label="Toggle navigation drawer"
             >
               <Menu size={18} />

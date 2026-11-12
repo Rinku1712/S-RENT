@@ -44,9 +44,9 @@ const Profile = () => {
   }, []);
 
   return (
-    <div className="container" style={{ padding: '36px 20px 72px', maxWidth: 680 }}>
+    <div className="container" style={{ padding: '24px 16px 56px', maxWidth: 680 }}>
       {/* Header Navigation */}
-      <div style={{ marginBottom: 24 }}>
+      <div style={{ marginBottom: 20 }}>
         <Link
           to="/dashboard"
           style={{
@@ -61,10 +61,10 @@ const Profile = () => {
           <ArrowLeft size={14} />
           <span>Back to Dashboard</span>
         </Link>
-        <h1 style={{ fontSize: '1.85rem', fontWeight: 800, margin: '2px 0 4px' }}>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '2px 0 4px' }}>
           My Account Profile
         </h1>
-        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>
+        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.88rem' }}>
           Verified community member credentials and security standing
         </p>
       </div>
@@ -80,29 +80,30 @@ const Profile = () => {
           <span>{error}</span>
         </div>
       ) : profile ? (
-        <div className="card" style={{ padding: 32 }}>
+        <div className="card" style={{ padding: '24px 20px' }}>
           {/* Avatar and Header */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 20,
+              gap: 16,
               borderBottom: '1px solid var(--border)',
-              paddingBottom: 24,
-              marginBottom: 24,
+              paddingBottom: 20,
+              marginBottom: 20,
+              flexWrap: 'wrap',
             }}
           >
             <div
               style={{
-                width: 68,
-                height: 68,
+                width: 60,
+                height: 60,
                 borderRadius: 'var(--radius-full)',
                 backgroundColor: 'var(--primary-light)',
                 color: 'var(--primary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.75rem',
+                fontSize: '1.6rem',
                 fontWeight: 800,
                 flexShrink: 0,
               }}
@@ -110,8 +111,8 @@ const Profile = () => {
               {profile.name ? profile.name[0].toUpperCase() : 'U'}
             </div>
 
-            <div>
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 6px' }}>
+            <div style={{ minWidth: 200, flex: 1 }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 6px' }}>
                 {profile.name}
               </h2>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -131,28 +132,34 @@ const Profile = () => {
           </div>
 
           {/* Details Table */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, fontSize: '0.9rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, fontSize: '0.88rem' }}>
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 8,
                 borderBottom: '1px solid var(--border-light)',
-                paddingBottom: 12,
+                paddingBottom: 10,
               }}
             >
               <span className="text-muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Mail size={16} />
                 <span>Email Address</span>
               </span>
-              <strong style={{ color: 'var(--text-primary)' }}>{profile.email}</strong>
+              <strong style={{ color: 'var(--text-primary)', wordBreak: 'break-all' }}>{profile.email}</strong>
             </div>
 
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 8,
                 borderBottom: '1px solid var(--border-light)',
-                paddingBottom: 12,
+                paddingBottom: 10,
               }}
             >
               <span className="text-muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -166,15 +173,18 @@ const Profile = () => {
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 8,
                 borderBottom: '1px solid var(--border-light)',
-                paddingBottom: 12,
+                paddingBottom: 10,
               }}
             >
               <span className="text-muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <MapPin size={16} />
                 <span>Registered Address</span>
               </span>
-              <strong style={{ color: 'var(--text-primary)' }}>
+              <strong style={{ color: 'var(--text-primary)', textAlign: 'right' }}>
                 {profile.address?.city
                   ? `${profile.address.city}, ${profile.address.state || ''} ${profile.address.postalCode || ''}`
                   : 'India'}
@@ -185,8 +195,11 @@ const Profile = () => {
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 8,
                 borderBottom: '1px solid var(--border-light)',
-                paddingBottom: 12,
+                paddingBottom: 10,
               }}
             >
               <span className="text-muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

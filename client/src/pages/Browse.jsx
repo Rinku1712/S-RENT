@@ -118,6 +118,11 @@ const Browse = () => {
     fetchItems();
   }, [searchParams]);
 
+  // Close mobile filter on filter change
+  useEffect(() => {
+    setMobileFilterOpen(false);
+  }, [searchParams]);
+
   // Apply filters by pushing parameters into URL
   const applyFilters = (overrides = {}) => {
     const current = {
@@ -222,12 +227,10 @@ const Browse = () => {
 
           <button
             onClick={() => setMobileFilterOpen(true)}
-            className="btn btn-secondary btn-sm"
-            style={{ display: 'none' }}
-            id="mobile-filter-btn"
+            className="btn btn-secondary btn-sm mobile-filter-trigger"
           >
             <SlidersHorizontal size={14} />
-            <span>Filters ({activeFilterList.length})</span>
+            <span>Filters {activeFilterList.length > 0 ? `(${activeFilterList.length})` : ''}</span>
           </button>
         </div>
 
@@ -248,17 +251,27 @@ const Browse = () => {
                 <SlidersHorizontal size={18} className="text-red" />
                 <span>Filter Items</span>
               </h3>
-              {activeFilterList.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {activeFilterList.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearFilters}
+                    className="btn btn-ghost btn-sm"
+                    style={{ color: 'var(--primary)', padding: '2px 6px', fontSize: '0.78rem' }}
+                  >
+                    <RotateCcw size={12} />
+                    <span>Reset</span>
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={handleClearFilters}
-                  className="btn btn-ghost btn-sm"
-                  style={{ color: 'var(--primary)', padding: '2px 6px', fontSize: '0.78rem' }}
+                  onClick={() => setMobileFilterOpen(false)}
+                  className="filter-close-btn"
+                  aria-label="Close filters"
                 >
-                  <RotateCcw size={12} />
-                  <span>Reset All</span>
+                  <X size={18} />
                 </button>
-              )}
+              </div>
             </div>
 
             <form onSubmit={handleSearchSubmit}>
@@ -442,6 +455,15 @@ const Browse = () => {
             </form>
           </aside>
 
+          {/* Backdrop for Mobile Filter Drawer */}
+          {mobileFilterOpen && (
+            <div
+              className="filter-backdrop"
+              onClick={() => setMobileFilterOpen(false)}
+              aria-hidden="true"
+            />
+          )}
+
           {/* ========================================================
               RIGHT AREA: RESULTS TOOLBAR & PRODUCT GRID
               ======================================================== */}
@@ -530,6 +552,18 @@ const Browse = () => {
               </div>
             )}
           </main>
+        </div>
+
+        {/* Floating Mobile Filter Pill */}
+        <div className="floating-mobile-filter">
+          <button
+            type="button"
+            onClick={() => setMobileFilterOpen(true)}
+            className="btn btn-primary floating-filter-pill"
+          >
+            <SlidersHorizontal size={16} />
+            <span>Filters {activeFilterList.length > 0 ? `(${activeFilterList.length})` : ''}</span>
+          </button>
         </div>
       </div>
     </div>

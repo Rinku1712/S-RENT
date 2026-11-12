@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -34,6 +34,11 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
@@ -133,48 +138,50 @@ const Navbar = () => {
             {wishlistCount > 0 && <span className="nav-badge-count">{wishlistCount}</span>}
           </Link>
 
-          {/* "+ List Item" CTA */}
-          <Link to="/create-item" className="btn btn-primary btn-sm">
+          {/* "+ List Item" CTA (Desktop) */}
+          <Link to="/create-item" className="btn btn-primary btn-sm desktop-only">
             <PlusCircle size={15} />
             <span>List Item</span>
           </Link>
 
-          {/* Auth State */}
-          {isAuthenticated ? (
-            <div className="user-nav-dropdown">
-              <Link
-                to={isSuperAdmin ? '/admin/dashboard' : '/dashboard'}
-                className="user-pill"
-                title="Open Dashboard"
-              >
-                <div className="user-avatar-circle">
-                  {user?.name ? user.name[0].toUpperCase() : 'U'}
-                </div>
-                <span>{user?.name?.split(' ')[0] || (isSuperAdmin ? 'Admin' : 'Member')}</span>
-                {isSuperAdmin && <span className="badge badge-primary">Admin</span>}
-              </Link>
+          {/* Auth State (Desktop) */}
+          <div className="desktop-only">
+            {isAuthenticated ? (
+              <div className="user-nav-dropdown">
+                <Link
+                  to={isSuperAdmin ? '/admin/dashboard' : '/dashboard'}
+                  className="user-pill"
+                  title="Open Dashboard"
+                >
+                  <div className="user-avatar-circle">
+                    {user?.name ? user.name[0].toUpperCase() : 'U'}
+                  </div>
+                  <span>{user?.name?.split(' ')[0] || (isSuperAdmin ? 'Admin' : 'Member')}</span>
+                  {isSuperAdmin && <span className="badge badge-primary">Admin</span>}
+                </Link>
 
-              <button
-                onClick={handleLogout}
-                className="btn btn-secondary btn-sm"
-                title="Sign Out"
-              >
-                <LogOut size={14} />
-                <span>Logout</span>
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Link to="/login" className="btn btn-secondary btn-sm">
-                <LogIn size={14} />
-                <span>Login</span>
-              </Link>
-              <Link to="/signup" className="btn btn-outline btn-sm">
-                <UserPlus size={14} />
-                <span>Sign Up</span>
-              </Link>
-            </div>
-          )}
+                <button
+                  onClick={handleLogout}
+                  className="btn btn-secondary btn-sm"
+                  title="Sign Out"
+                >
+                  <LogOut size={14} />
+                  <span>Logout</span>
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Link to="/login" className="btn btn-secondary btn-sm">
+                  <LogIn size={14} />
+                  <span>Login</span>
+                </Link>
+                <Link to="/signup" className="btn btn-outline btn-sm">
+                  <UserPlus size={14} />
+                  <span>Sign Up</span>
+                </Link>
+              </div>
+            )}
+          </div>
 
           {/* Mobile Menu Toggle Button */}
           <button
@@ -186,6 +193,15 @@ const Navbar = () => {
           </button>
         </div>
       </div>
+
+      {/* Mobile Drawer Backdrop Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="mobile-drawer-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
       {/* Mobile Navigation Drawer */}
       <div className={`mobile-drawer ${mobileMenuOpen ? 'open' : ''}`}>

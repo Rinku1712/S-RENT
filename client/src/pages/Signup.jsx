@@ -124,7 +124,7 @@ const Signup = () => {
           </div>
 
           {/* Email & Phone Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div className="form-row-2">
             <div className="form-group">
               <label className="form-label">Email Address *</label>
               <div style={{ position: 'relative' }}>
@@ -169,7 +169,7 @@ const Signup = () => {
           </div>
 
           {/* City & State Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div className="form-row-2">
             <div className="form-group">
               <label className="form-label">City *</label>
               <div style={{ position: 'relative' }}>
@@ -206,7 +206,7 @@ const Signup = () => {
           </div>
 
           {/* Password & Confirm Password */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div className="form-row-2">
             <div className="form-group">
               <label className="form-label">Password *</label>
               <div className="password-input-wrapper">
