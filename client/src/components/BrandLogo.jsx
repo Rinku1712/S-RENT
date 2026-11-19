@@ -14,7 +14,7 @@ const BrandLogo = ({
   size = 'md',
   variant = 'full',
   theme = 'light',
-  tagline = 'Sab Rent Par, Saste Rent Par',
+  tagline = 'Rent Smart. Live More.',
   clickable = true,
   className = '',
   onClick,
@@ -55,9 +55,9 @@ const BrandLogo = ({
       >
         <defs>
           <linearGradient id={`srIconGrad-${size}`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FF4D4D" />
-            <stop offset="55%" stopColor="#E93636" />
-            <stop offset="100%" stopColor="#C62828" />
+            <stop offset="0%" stopColor="#EF4444" />
+            <stop offset="55%" stopColor="#DC2626" />
+            <stop offset="100%" stopColor="#B91C1C" />
           </linearGradient>
           <filter id={`srShadow-${size}`} x="-20%" y="-20%" width="140%" height="140%">
             <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#E93636" floodOpacity="0.32" />
@@ -156,12 +156,12 @@ const BrandLogo = ({
             fontWeight: 900,
             fontSize: dim.titleSize,
             letterSpacing: '-0.03em',
-            color: isDark ? '#FFFFFF' : '#171717',
+            color: '#DC2626',
             display: 'inline-flex',
             alignItems: 'baseline',
           }}
         >
-          S<span style={{ color: '#E93636' }}>-RENT</span>
+          s-rent
         </span>
         {variant === 'full' && tagline && (
           <span

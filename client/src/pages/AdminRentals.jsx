@@ -76,7 +76,7 @@ const AdminRentals = () => {
             Rental Orders & Contracts
           </h2>
           <p style={{ margin: 0, fontSize: '0.84rem', color: '#64748B' }}>
-            Monitor peer rental bookings, fulfillment statuses, and security deposit escrow
+            Monitor rental requests, booking statuses, and listing details
           </p>
         </div>
 
@@ -408,4 +408,3 @@ const AdminRentals = () => {
 };
 
 export default AdminRentals;
-

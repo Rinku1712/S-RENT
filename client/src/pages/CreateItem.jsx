@@ -66,8 +66,12 @@ const CreateItem = () => {
         setLoadingCategories(true);
         const res = await getCategories();
         if (res.data && res.data.length > 0) {
-          setCategories(res.data);
-          setFormData((prev) => ({ ...prev, categoryId: res.data[0]._id }));
+          const sanitized = res.data.map((cat) => ({
+            ...cat,
+            name: cat.name ? cat.name.replace(/electroinces/i, 'Electronics') : 'Category',
+          }));
+          setCategories(sanitized);
+          setFormData((prev) => ({ ...prev, categoryId: sanitized[0]._id }));
         }
       } catch (err) {
         console.error('Failed to load categories:', err);
@@ -260,7 +264,7 @@ const CreateItem = () => {
           List an Item for Rent
         </h1>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.92rem' }}>
-          Share your cameras, power tools, electronics, or outdoor gear with verified neighbors and earn consistent passive income
+          Share your cameras, power tools, electronics, or outdoor gear with renters. Set your own pricing and availability.
         </p>
       </div>
 
@@ -378,7 +382,7 @@ const CreateItem = () => {
                     Upload clear photos from your camera or gallery
                   </span>
                 </div>
-                <span className="badge badge-neutral">
+                <span className="badge badge-secondary">
                   {imagePreviews.length} / 10 photos
                 </span>
               </div>
@@ -526,7 +530,7 @@ const CreateItem = () => {
               >
                 <ShieldCheck size={18} className="text-red" style={{ flexShrink: 0, marginTop: 1 }} />
                 <span>
-                  The security deposit protects your equipment against potential damage or delay. It is retained until the gear is returned and verified in person.
+                  If you require a deposit, clarify the amount, payment, and return terms with renters before handover.
                 </span>
               </div>
             </div>
@@ -663,13 +667,13 @@ const CreateItem = () => {
               gap: 12,
             }}
           >
-            <ShieldCheck size={28} className="text-success" style={{ flexShrink: 0 }} />
+            <CheckCircle2 size={28} className="text-success" style={{ flexShrink: 0 }} />
             <div>
               <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)', display: 'block' }}>
-                Protected by S-RENT
+                Manage requests directly
               </strong>
               <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                Every renter must verify their email and phone. You have 100% discretion to accept or reject any booking request.
+                Review incoming booking requests, then coordinate payment and handover details with the renter.
               </p>
             </div>
           </div>

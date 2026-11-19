@@ -70,7 +70,13 @@ const Browse = () => {
   useEffect(() => {
     getCategories()
       .then((res) => {
-        if (res.data) setCategories(res.data);
+        if (res.data) {
+          const sanitized = res.data.map((cat) => ({
+            ...cat,
+            name: cat.name ? cat.name.replace(/electroinces/i, 'Electronics') : 'Category',
+          }));
+          setCategories(sanitized);
+        }
       })
       .catch((err) => console.error('Failed to load categories', err));
   }, []);
@@ -227,7 +233,7 @@ const Browse = () => {
               Explore Rental Marketplace
             </h1>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-              Browse verified cameras, tools, tech, appliances, and vehicles across India
+              Browse equipment listed by members and filter by category, location, and rental price.
             </p>
           </div>
 
@@ -530,6 +536,8 @@ const Browse = () => {
                     className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
                     onClick={() => setViewMode('grid')}
                     title="Grid View"
+                    aria-label="Grid view"
+                    aria-pressed={viewMode === 'grid'}
                   >
                     <LayoutGrid size={15} />
                   </button>
@@ -538,6 +546,8 @@ const Browse = () => {
                     className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
                     onClick={() => setViewMode('list')}
                     title="List View"
+                    aria-label="List view"
+                    aria-pressed={viewMode === 'list'}
                   >
                     <List size={15} />
                   </button>
@@ -554,13 +564,14 @@ const Browse = () => {
                 {activeFilterList.map((item) => (
                   <span key={item.key} className="filter-chip">
                     <span>{item.label}</span>
-                    <span
+                    <button
+                      type="button"
                       onClick={() => removeFilterParam(item.key)}
                       className="filter-chip-remove"
-                      title="Remove filter"
+                      aria-label={`Remove ${item.label} filter`}
                     >
                       <X size={13} />
-                    </span>
+                    </button>
                   </span>
                 ))}
                 <button

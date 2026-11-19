@@ -171,7 +171,7 @@ const AdminItems = () => {
             flexWrap: 'wrap',
           }}
         >
-          <div style={{ display: 'flex', gap: 10, flex: 1, minWidth: 260 }}>
+          <div style={{ display: 'flex', gap: 10, flex: 1, minWidth: 'min(260px, 100%)' }}>
             <div style={{ position: 'relative', flex: 1 }}>
               <input
                 type="text"
@@ -549,4 +549,3 @@ const AdminItems = () => {
 };
 
 export default AdminItems;
-

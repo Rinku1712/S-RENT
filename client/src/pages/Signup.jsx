@@ -307,7 +307,7 @@ const Signup = () => {
             }}
           >
             <ShieldCheck size={14} className="text-success" />
-            <span>Instant email verification for secure peer-to-peer trust</span>
+            <span>Verify your email address with a one-time code</span>
           </div>
         </div>
       </div>

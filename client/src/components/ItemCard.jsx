@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, ShieldCheck, ArrowRight, Package, Heart } from 'lucide-react';
+import { MapPin, ShieldCheck, ArrowRight, Package, Heart, UserRound } from 'lucide-react';
 import getItemImageUrl from '../utils/itemImageUrl';
 import { useWishlist } from '../context/WishlistContext';
 
@@ -10,7 +10,7 @@ import { useWishlist } from '../context/WishlistContext';
  * - High quality product image with fallback
  * - Floating Wishlist Heart button with live local state
  * - Availability badge & Condition tag
- * - Verified Owner indicator
+ * - Listing owner information
  * - Category, Brand, City Location
  * - Structured pricing: Price/day, Price/week, Security deposit
  * - View Details button linking to /items/:id
@@ -39,15 +39,20 @@ const ItemCard = ({ item }) => {
   };
 
   const getImageUrl = () => {
-    if (imageError || !item.images || item.images.length === 0) {
-      return null;
-    }
-    return getItemImageUrl(item.images[0]);
+    if (imageError || !item.images?.length) return '';
+
+    const first = item.images[0];
+    if (typeof first === 'string' && (first.includes('example.com') || first.trim() === '')) return '';
+
+    return getItemImageUrl(first) || '';
   };
 
   const imageUrl = getImageUrl();
-  const categoryName = item.categoryId?.name || 'Equipment';
+  const rawCat = item.categoryId?.name || 'Equipment';
+  const categoryName = rawCat.replace(/electroinces/i, 'Electronics');
   const isAvailable = item.availabilityStatus === 'available';
+  const isOwnerVerified = item.ownerId?.isEmailVerified === true;
+  const ownerName = item.ownerId?.name || 'Community member';
 
   const handleWishlistClick = (e) => {
     e.preventDefault();
@@ -66,6 +71,9 @@ const ItemCard = ({ item }) => {
               alt={item.name}
               className="item-card-img"
               onError={() => setImageError(true)}
+              onLoad={(event) => {
+                if (event.currentTarget.naturalWidth <= 1) setImageError(true);
+              }}
               loading="lazy"
             />
           ) : (
@@ -82,7 +90,8 @@ const ItemCard = ({ item }) => {
           onClick={handleWishlistClick}
           className={`card-wishlist-btn ${wishlisted ? 'active' : ''}`}
           title={wishlisted ? 'Remove from Wishlist' : 'Save to Wishlist'}
-          aria-label="Wishlist"
+          aria-label={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+          aria-pressed={wishlisted}
         >
           <Heart size={16} fill={wishlisted ? 'currentColor' : 'none'} />
         </button>
@@ -120,10 +129,12 @@ const ItemCard = ({ item }) => {
           <Link to={`/items/${item._id}`}>{item.name}</Link>
         </h3>
 
-        {/* Verified Owner / Trust Cue */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, fontSize: 12, color: 'var(--success)' }}>
-          <ShieldCheck size={14} />
-          <span style={{ fontWeight: 600 }}>Verified Owner</span>
+        {/* Owner information */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, fontSize: 12, color: isOwnerVerified ? 'var(--success)' : 'var(--text-muted)', minWidth: 0 }}>
+          {isOwnerVerified ? <ShieldCheck size={14} /> : <UserRound size={14} />}
+          <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {isOwnerVerified ? 'Email-verified owner' : `Listed by ${ownerName}`}
+          </span>
         </div>
 
         {/* Deposit Tag */}
@@ -131,7 +142,6 @@ const ItemCard = ({ item }) => {
           <div className="deposit-pill-row">
             <span>Security Deposit:</span>
             <strong style={{ color: 'var(--text-primary)' }}>₹{item.securityDeposit}</strong>
-            <span style={{ color: 'var(--success)', fontWeight: 600 }}>(100% Refundable)</span>
           </div>
         ) : (
           <div className="deposit-pill-row">

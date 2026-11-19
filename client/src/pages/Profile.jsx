@@ -117,9 +117,8 @@ const Profile = () => {
               </h2>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <span
-                  className={`badge ${
-                    profile.isEmailVerified ? 'badge-success' : 'badge-warning'
-                  }`}
+                  className={`badge ${profile.isEmailVerified ? 'badge-success' : 'badge-warning'
+                    }`}
                 >
                   <ShieldCheck size={13} />
                   <span>{profile.isEmailVerified ? 'Email Verified' : 'Unverified Email'}</span>

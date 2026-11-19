@@ -28,13 +28,13 @@ import {
 } from 'lucide-react';
 
 /**
- * Premium S-RENT Product Details & Instant Booking Experience
+ * S-RENT item details and rental request experience
  * Standards:
  * - Amazon / Airbnb grade layout with high-converting sticky booking calculator
  * - Multi-image gallery with active thumbnail selector
- * - Live rental day calculation with refundable deposit breakdown
+ * - Live rental day calculation and deposit breakdown
  * - Wishlist integration and one-click share link
- * - Verified owner credibility badge & safety guarantees
+ * - Owner email verification status
  * - Related items recommendations from the same category
  * - Fully accessible, zero emojis, 100% Lucide React icons
  */
@@ -52,6 +52,7 @@ const ItemDetails = () => {
 
   // Gallery state
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [imageError, setImageError] = useState(false);
 
   // Booking form state
   const todayStr = new Date().toISOString().split('T')[0];
@@ -73,6 +74,7 @@ const ItemDetails = () => {
         setLoading(true);
         setError(null);
         setActiveImageIndex(0);
+        setImageError(false);
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
         const allItems = await getAllItems();
@@ -223,10 +225,17 @@ const ItemDetails = () => {
     );
   }
 
-  // Build image list
+  // Build the gallery from listing images; missing or invalid images use the local placeholder.
   const imagesList = Array.isArray(item.images) && item.images.length > 0 ? item.images : [];
-  const currentImageUrl = imagesList.length > 0 ? getItemImageUrl(imagesList[activeImageIndex]) : null;
+  const rawImage = imagesList.length > 0 ? imagesList[activeImageIndex] : null;
+  const currentImageUrl =
+    rawImage && typeof rawImage === 'string' && !rawImage.includes('example.com') && rawImage.trim()
+      ? getItemImageUrl(rawImage)
+      : null;
   const wishlisted = isWishlisted(item._id);
+  const cleanCategoryName = (item.categoryId?.name || '').replace(/electroinces/i, 'Electronics');
+  const ownerName = item.ownerId?.name || 'Community member';
+  const ownerEmailVerified = item.ownerId?.isEmailVerified === true;
 
   return (
     <div className="details-page container">
@@ -245,11 +254,11 @@ const ItemDetails = () => {
           <Link to="/">Home</Link>
           <ChevronRight size={13} />
           <Link to="/items">Catalog</Link>
-          {item.categoryId?.name && (
+          {cleanCategoryName && (
             <>
               <ChevronRight size={13} />
-              <Link to={`/items?category=${encodeURIComponent(item.categoryId.name)}`}>
-                {item.categoryId.name}
+              <Link to={`/items?category=${encodeURIComponent(cleanCategoryName)}`}>
+                {cleanCategoryName}
               </Link>
             </>
           )}
@@ -294,14 +303,17 @@ const ItemDetails = () => {
           {/* Gallery View */}
           <div className="product-gallery">
             <div className="gallery-main-view">
-              {currentImageUrl ? (
+              {currentImageUrl && !imageError ? (
                 <img
                   src={currentImageUrl}
                   alt={item.name}
                   className="gallery-main-img"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1581291518655-9523c932deb4?w=800&auto=format&fit=crop&q=80';
+                    setImageError(true);
+                  }}
+                  onLoad={(e) => {
+                    if (e.currentTarget.naturalWidth <= 1) setImageError(true);
                   }}
                 />
               ) : (
@@ -320,7 +332,10 @@ const ItemDetails = () => {
                   return (
                     <button
                       key={idx}
-                      onClick={() => setActiveImageIndex(idx)}
+                      onClick={() => {
+                        setActiveImageIndex(idx);
+                        setImageError(false);
+                      }}
                       className={`thumbnail-chip ${activeImageIndex === idx ? 'active' : ''}`}
                       type="button"
                     >
@@ -375,8 +390,12 @@ const ItemDetails = () => {
               </div>
               <span>•</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <UserCheck size={15} className="text-success" />
-                <span>Verified Owner Listing</span>
+                {ownerEmailVerified ? (
+                  <UserCheck size={15} className="text-success" />
+                ) : (
+                  <UserCheck size={15} className="text-muted" />
+                )}
+                <span>{ownerEmailVerified ? 'Email-verified owner' : `Listed by ${ownerName}`}</span>
               </div>
             </div>
           </div>
@@ -401,7 +420,7 @@ const ItemDetails = () => {
                 <Award size={20} className="spec-icon" />
                 <div>
                   <div className="spec-label">Brand / Model</div>
-                  <div className="spec-value">{item.brand || 'Original Equipment'}</div>
+                  <div className="spec-value">{item.brand || 'Not specified'}</div>
                 </div>
               </div>
 
@@ -410,7 +429,7 @@ const ItemDetails = () => {
                 <div>
                   <div className="spec-label">Physical Condition</div>
                   <div className="spec-value" style={{ textTransform: 'capitalize' }}>
-                    {item.condition ? item.condition.replace('_', ' ') : 'Verified Functional'}
+                    {item.condition ? item.condition.replace('_', ' ') : 'Not specified'}
                   </div>
                 </div>
               </div>
@@ -420,7 +439,7 @@ const ItemDetails = () => {
                 <div>
                   <div className="spec-label">Pickup Location</div>
                   <div className="spec-value">
-                    {item.location?.city}, {item.location?.state}
+                    {[item.location?.city, item.location?.state].filter(Boolean).join(', ') || 'Not provided'}
                   </div>
                 </div>
               </div>
@@ -437,7 +456,7 @@ const ItemDetails = () => {
                 <ShieldCheck size={20} className="spec-icon" />
                 <div>
                   <div className="spec-label">Security Deposit</div>
-                  <div className="spec-value">₹{item.securityDeposit || 0} (100% Refundable)</div>
+                  <div className="spec-value">₹{item.securityDeposit || 0}</div>
                 </div>
               </div>
             </div>
@@ -456,12 +475,11 @@ const ItemDetails = () => {
                 whiteSpace: 'pre-line',
               }}
             >
-              {item.description ||
-                'The owner has listed this equipment in ready-to-use condition with all standard accessories included. Inspect before handover and return in same clean condition.'}
+              {item.description || 'The owner has not added a description for this listing yet.'}
             </div>
           </div>
 
-          {/* Verified Owner Card */}
+          {/* Listing owner */}
           <div className="owner-profile-card">
             <div
               style={{
@@ -484,18 +502,13 @@ const ItemDetails = () => {
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <strong style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>
-                  {item.ownerId?.name || 'Verified Community Member'}
+                  {ownerName}
                 </strong>
-                <UserCheck size={16} className="text-success" />
+                {ownerEmailVerified && <UserCheck size={16} className="text-success" aria-label="Email verified" />}
               </div>
               <p style={{ margin: '2px 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                S-RENT Verified Partner • Phone & Government ID Checked
+                {ownerEmailVerified ? 'Email verified by S-RENT' : 'Community member'}
               </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 6, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                <span>Identity Verified</span>
-                <span>•</span>
-                <span>Fast Response Time (under 1 hr)</span>
-              </div>
             </div>
           </div>
 
@@ -511,12 +524,12 @@ const ItemDetails = () => {
           >
             <h4 style={{ fontSize: '0.92rem', fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
               <ShieldCheck size={16} className="text-red" />
-              <span>S-RENT Renter Protection Promise</span>
+              <span>Before you book</span>
             </h4>
             <ul style={{ margin: 0, paddingLeft: 18, fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-              <li>Security deposits are held in escrow and returned immediately upon equipment return.</li>
-              <li>Inspect physical item upon handover; report any discrepancy before starting rental.</li>
-              <li>Direct direct owner messaging and mutual contact disclosure after request approval.</li>
+              <li>Confirm rental dates and terms with the owner before sending a request.</li>
+              <li>Inspect the item and included accessories at handover.</li>
+              <li>Agree on deposit and return arrangements before the rental starts.</li>
             </ul>
           </div>
         </div>
@@ -556,7 +569,7 @@ const ItemDetails = () => {
               }}
             >
               <CheckCircle2 size={16} />
-              <span>{isAvailable ? 'Item is available for instant rental booking' : 'Currently rented out'}</span>
+              <span>{isAvailable ? 'Available to request' : 'Currently rented out'}</span>
             </div>
 
             {/* Date Range Selection Box */}
@@ -682,7 +695,7 @@ const ItemDetails = () => {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <CheckCircle2 size={14} className="text-success" />
-                <span>100% Refundable security deposit protection</span>
+                <span>Review deposit and return terms with the owner</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <CheckCircle2 size={14} className="text-success" />

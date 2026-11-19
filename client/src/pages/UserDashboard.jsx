@@ -635,12 +635,12 @@ const UserDashboard = () => {
                             List More Equipment
                           </h3>
                           <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                            Earn passive rental revenue
+                            List equipment you have available
                           </span>
                         </div>
                       </div>
                       <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 16px' }}>
-                        Have cameras, power tools, camping gear, or tech sitting idle? List them in under 2 minutes and start earning securely.
+                        Add photos, rental details, pricing, and availability to create a listing.
                       </p>
                       <Link to="/create-item" className="btn btn-primary btn-sm">
                         <span>Create Listing</span>
@@ -669,12 +669,12 @@ const UserDashboard = () => {
                             Explore Rental Gear
                           </h3>
                           <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                            Thousands of verified items
+                            Equipment listed by members
                           </span>
                         </div>
                       </div>
                       <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 16px' }}>
-                        Why buy when you can rent for a fraction of the price? Discover cameras, drones, tools, and electronics nearby.
+                        Browse available cameras, drones, tools, and electronics. Compare listing details before requesting a rental.
                       </p>
                       <Link to="/items" className="btn btn-secondary btn-sm">
                         <span>Browse Catalog</span>

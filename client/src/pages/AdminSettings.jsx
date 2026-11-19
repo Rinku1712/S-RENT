@@ -12,7 +12,7 @@ import {
   LogOut,
   AlertCircle,
   RefreshCw,
-  CheckCircle2,
+  Info,
 } from 'lucide-react';
 
 /**
@@ -131,34 +131,34 @@ const AdminSettings = () => {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: '0.88rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F1F5F9' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, padding: '8px 0', borderBottom: '1px solid #F1F5F9' }}>
                 <span style={{ color: '#64748B', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Mail size={15} />
                   <span>Administrative Email:</span>
                 </span>
-                <strong>{profile?.email || 'rohillarinku446@gmail.com'}</strong>
+                <strong style={{ overflowWrap: 'anywhere' }}>{profile?.email || 'Not provided'}</strong>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F1F5F9' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, padding: '8px 0', borderBottom: '1px solid #F1F5F9' }}>
                 <span style={{ color: '#64748B', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Phone size={15} />
                   <span>Emergency Phone:</span>
                 </span>
-                <strong>{profile?.phone || '9991053089'}</strong>
+                <strong>{profile?.phone || 'Not provided'}</strong>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F1F5F9' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, padding: '8px 0', borderBottom: '1px solid #F1F5F9' }}>
                 <span style={{ color: '#64748B', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Lock size={15} />
                   <span>Credential Storage:</span>
                 </span>
-                <span className="badge badge-success">
+                <span className="badge badge-secondary">
                   <ShieldCheck size={12} />
-                  <span>Server Environment Variables (.env)</span>
+                  <span>Managed by server</span>
                 </span>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, padding: '8px 0' }}>
                 <span style={{ color: '#64748B', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <ShieldCheck size={15} />
                   <span>Authorization Scope:</span>
@@ -168,50 +168,50 @@ const AdminSettings = () => {
             </div>
           </div>
 
-          {/* Section 2: Platform Infrastructure Health */}
+          {/* Section 2: Platform Services */}
           <div className="admin-card">
             <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8, color: '#0F172A' }}>
               <Server size={18} className="text-red" />
-              <span>Infrastructure Health & Services</span>
+              <span>Platform Services</span>
             </h3>
 
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
                 gap: 16,
               }}
             >
               <div style={{ padding: 16, background: '#F8FAFC', borderRadius: 8, border: '1px solid #E2E8F0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <Database size={16} className="text-success" />
-                  <strong style={{ fontSize: '0.9rem', color: '#0F172A' }}>MongoDB Service</strong>
+                  <Database size={16} className="text-muted" />
+                  <strong style={{ fontSize: '0.9rem', color: '#0F172A' }}>Database</strong>
                 </div>
-                <div style={{ fontSize: '0.8rem', color: '#16A34A', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <CheckCircle2 size={12} />
-                  <span>Connected (mongodb://127.0.0.1:27017/RIB)</span>
+                <div style={{ fontSize: '0.8rem', color: '#64748B', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                  <Info size={13} style={{ flexShrink: 0, marginTop: 2 }} />
+                  <span>Database connectivity is managed by the server configuration.</span>
                 </div>
               </div>
 
               <div style={{ padding: 16, background: '#F8FAFC', borderRadius: 8, border: '1px solid #E2E8F0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <Server size={16} className="text-success" />
+                  <Server size={16} className="text-muted" />
                   <strong style={{ fontSize: '0.9rem', color: '#0F172A' }}>Express REST API</strong>
                 </div>
-                <div style={{ fontSize: '0.8rem', color: '#16A34A', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <CheckCircle2 size={12} />
-                  <span>Port 3000 Active & Healthy</span>
+                <div style={{ fontSize: '0.8rem', color: '#64748B', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                  <Info size={13} style={{ flexShrink: 0, marginTop: 2 }} />
+                  <span>Marketplace requests are handled by the application server.</span>
                 </div>
               </div>
 
               <div style={{ padding: 16, background: '#F8FAFC', borderRadius: 8, border: '1px solid #E2E8F0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <Mail size={16} className="text-success" />
-                  <strong style={{ fontSize: '0.9rem', color: '#0F172A' }}>Nodemailer Service</strong>
+                  <Mail size={16} className="text-muted" />
+                  <strong style={{ fontSize: '0.9rem', color: '#0F172A' }}>Email Delivery</strong>
                 </div>
-                <div style={{ fontSize: '0.8rem', color: '#16A34A', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <CheckCircle2 size={12} />
-                  <span>Gmail App Password Configured</span>
+                <div style={{ fontSize: '0.8rem', color: '#64748B', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                  <Info size={13} style={{ flexShrink: 0, marginTop: 2 }} />
+                  <span>Verification emails use the mail provider configured on the server.</span>
                 </div>
               </div>
             </div>
@@ -245,4 +245,3 @@ const AdminSettings = () => {
 };
 
 export default AdminSettings;
-
